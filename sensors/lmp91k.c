@@ -12,10 +12,10 @@
 #define 	LMP91K_GPIO_CLK       	RCC_AHB1Periph_GPIOD
 
 
-/* Пины сенсоров для выбора конкретного датчика PORTD */
+/* РџРёРЅС‹ СЃРµРЅСЃРѕСЂРѕРІ РґР»СЏ РІС‹Р±РѕСЂР° РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РґР°С‚С‡РёРєР° PORTD */
 static uint32_t LMP91K_PIN[] = {
     GPIO_Pin_6, GPIO_Pin_7, GPIO_Pin_8, GPIO_Pin_9,
-    /* GPIO_Pin_0, GPIO_Pin_1, GPIO_Pin_2, GPIO_Pin_3, // -- Эти не работают!!! */
+    /* GPIO_Pin_0, GPIO_Pin_1, GPIO_Pin_2, GPIO_Pin_3, // -- Р­С‚Рё РЅРµ СЂР°Р±РѕС‚Р°СЋС‚!!! */
 };
 
 static u8 reg[] = { STATUS_REG, LOCK_REG, TIACN_REG, REFCN_REG, MODECN_REG };
@@ -28,59 +28,59 @@ static const char *reg_name[] = {
 };
 
 /**
- * Инициализация всех каналов АЦП
- * Проверка EEPROM
+ * РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РІСЃРµС… РєР°РЅР°Р»РѕРІ РђР¦Рџ
+ * РџСЂРѕРІРµСЂРєР° EEPROM
  */
 void lmp91k_port_init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    /* Тактирование */
+    /* РўР°РєС‚РёСЂРѕРІР°РЅРёРµ */
     RCC_AHB1PeriphClockCmd(LMP91K_GPIO_CLK, ENABLE);
 
-    /* Configure PINS MENB - 4 штуки */
+    /* Configure PINS MENB - 4 С€С‚СѓРєРё */
     GPIO_InitStructure.GPIO_Pin = LMP91K_PIN[0] | LMP91K_PIN[1] | LMP91K_PIN[2] | LMP91K_PIN[3];
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
     GPIO_Init(LMP91K_GPIO_PORT, &GPIO_InitStructure);
 
-    /* Инициализация I2C */
+    /* РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ I2C */
     ub_i2c1_init();
 }
 
 
 /**
- * Выбираем конкретный сенсор. можно сделать в одном цыкле
- * Вызывается ЗА пределами этого файла
+ * Р’С‹Р±РёСЂР°РµРј РєРѕРЅРєСЂРµС‚РЅС‹Р№ СЃРµРЅСЃРѕСЂ. РјРѕР¶РЅРѕ СЃРґРµР»Р°С‚СЊ РІ РѕРґРЅРѕРј С†С‹РєР»Рµ
+ * Р’С‹Р·С‹РІР°РµС‚СЃСЏ Р—Рђ РїСЂРµРґРµР»Р°РјРё СЌС‚РѕРіРѕ С„Р°Р№Р»Р°
  */
 void lmp91k_on(uint8_t num)
 {
     volatile int i, j;
 
-    /* Сначала все отключим */
+    /* РЎРЅР°С‡Р°Р»Р° РІСЃРµ РѕС‚РєР»СЋС‡РёРј */
     for (i = 0; i < NUM_LMP91K_SENS; i++) {
 	if (i == num) {
-	    GPIO_ResetBits(LMP91K_GPIO_PORT, LMP91K_PIN[num]);	/* Выбираем конкретный сенсор */
+	    GPIO_ResetBits(LMP91K_GPIO_PORT, LMP91K_PIN[num]);	/* Р’С‹Р±РёСЂР°РµРј РєРѕРЅРєСЂРµС‚РЅС‹Р№ СЃРµРЅСЃРѕСЂ */
 	} else {
 	    GPIO_SetBits(LMP91K_GPIO_PORT, LMP91K_PIN[i]);
 	}
-	/* Не ставим ни taskDelay ни delay_ms так как не знаю в каком контексте выполняем */
+	/* РќРµ СЃС‚Р°РІРёРј РЅРё taskDelay РЅРё delay_ms С‚Р°Рє РєР°Рє РЅРµ Р·РЅР°СЋ РІ РєР°РєРѕРј РєРѕРЅС‚РµРєСЃС‚Рµ РІС‹РїРѕР»РЅСЏРµРј */
 	for (j = 0; j < 10000; j++);
     }
 }
 
 
 /**
- * Проверяем доступность конкретного сенсора на I2C
- * если работает - return 0, нет = -1
+ * РџСЂРѕРІРµСЂСЏРµРј РґРѕСЃС‚СѓРїРЅРѕСЃС‚СЊ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ СЃРµРЅСЃРѕСЂР° РЅР° I2C
+ * РµСЃР»Рё СЂР°Р±РѕС‚Р°РµС‚ - return 0, РЅРµС‚ = -1
  */
 int lmp91k_check(u8 * data)
 {
     int res = -1;
     int i, k;
 
-    /* Читаем данные с registra СТАТУСА */
+    /* Р§РёС‚Р°РµРј РґР°РЅРЅС‹Рµ СЃ registra РЎРўРђРўРЈРЎРђ */
     log_printf("Read data from regs:\n");
     for (i = 0; i < 5; i++) {
 	k = reg[i];
@@ -99,8 +99,8 @@ int lmp91k_check(u8 * data)
 
 
 /**
- * Конфигурирование 5-ти (из 20 возможных) регистров сенсора на LMP91K
- * должен быть предварительно выбран!
+ * РљРѕРЅС„РёРіСѓСЂРёСЂРѕРІР°РЅРёРµ 5-С‚Рё (РёР· 20 РІРѕР·РјРѕР¶РЅС‹С…) СЂРµРіРёСЃС‚СЂРѕРІ СЃРµРЅСЃРѕСЂР° РЅР° LMP91K
+ * РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕ РІС‹Р±СЂР°РЅ!
  */
 int lmp91k_config(u8 * data)
 {
@@ -113,9 +113,9 @@ int lmp91k_config(u8 * data)
 	}
 	log_printf("write data to regs:\n");
 
-	/* разблочим регистр LOCK прежде чем писать в другие регистры 
-	 * его нет смысла передавать, записывая 0 - дается возможность
-	 * писать в другие регистры */
+	/* СЂР°Р·Р±Р»РѕС‡РёРј СЂРµРіРёСЃС‚СЂ LOCK РїСЂРµР¶РґРµ С‡РµРј РїРёСЃР°С‚СЊ РІ РґСЂСѓРіРёРµ СЂРµРіРёСЃС‚СЂС‹ 
+	 * РµРіРѕ РЅРµС‚ СЃРјС‹СЃР»Р° РїРµСЂРµРґР°РІР°С‚СЊ, Р·Р°РїРёСЃС‹РІР°СЏ 0 - РґР°РµС‚СЃСЏ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ
+	 * РїРёСЃР°С‚СЊ РІ РґСЂСѓРіРёРµ СЂРµРіРёСЃС‚СЂС‹ */
 	lock = 0;
 	res = ub_i2c1_write_byte(LMP91K_I2C_ADDR, LOCK_REG, lock);
 	if (res < 0) {
@@ -123,7 +123,7 @@ int lmp91k_config(u8 * data)
 	}
 	log_printf("LOCK_REG: %02X\n", lock);
 
-	/* Читаем статус */
+	/* Р§РёС‚Р°РµРј СЃС‚Р°С‚СѓСЃ */
 	res = ub_i2c1_read_byte(LMP91K_I2C_ADDR, STATUS_REG);
 	if (res != 1) {
 	    log_printf("error: STATUS_REG isn't READY (%02X)\n", res);
@@ -131,10 +131,10 @@ int lmp91k_config(u8 * data)
 	}
 
 
-	/* Контрольный регистр TIACN */
+	/* РљРѕРЅС‚СЂРѕР»СЊРЅС‹Р№ СЂРµРіРёСЃС‚СЂ TIACN */
 	byte = data[TIACN_REG];
 	if (byte & 0xC0) {
-	    byte = 0;		// что то нехорошо в EEPROM!
+	    byte = 0;		// С‡С‚Рѕ С‚Рѕ РЅРµС…РѕСЂРѕС€Рѕ РІ EEPROM!
 	    byte |= 0x03;
 	}
 	res = ub_i2c1_write_byte(LMP91K_I2C_ADDR, TIACN_REG, byte);
@@ -143,7 +143,7 @@ int lmp91k_config(u8 * data)
 	}
 	log_printf("TIACN_REG: %02X\n", byte);
 
-	/* Регистр REFCN */
+	/* Р РµРіРёСЃС‚СЂ REFCN */
 	byte = data[REFCN_REG];
 	res = ub_i2c1_write_byte(LMP91K_I2C_ADDR, REFCN_REG, byte);
 	if (res < 0) {
@@ -151,10 +151,10 @@ int lmp91k_config(u8 * data)
 	}
 	log_printf("REFCN_REG: %02X\n", byte);
 
-	/* Регистр MODECN */
+	/* Р РµРіРёСЃС‚СЂ MODECN */
 	byte = data[MODECN_REG];
 	if (byte == 1) {
-	    byte |= 0x03;	/* Пока нет ground reference - должно быть так */
+	    byte |= 0x03;	/* РџРѕРєР° РЅРµС‚ ground reference - РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С‚Р°Рє */
 	}
 	res = ub_i2c1_write_byte(LMP91K_I2C_ADDR, MODECN_REG, byte);
 	if (res < 0) {
@@ -170,7 +170,7 @@ int lmp91k_config(u8 * data)
 	log_printf("LOCK_REG: %02X\n", lock);
 	log_printf("--------------------------------\n");
 
-	/* Читаем что записали для проверки */
+	/* Р§РёС‚Р°РµРј С‡С‚Рѕ Р·Р°РїРёСЃР°Р»Рё РґР»СЏ РїСЂРѕРІРµСЂРєРё */
 #if 0
 	log_printf("LOCK_REG: %02X\n", ub_i2c1_read_byte(LMP91K_I2C_ADDR, LOCK_REG));
 	log_printf("TIACN_REG: %02X\n", ub_i2c1_read_byte(LMP91K_I2C_ADDR, TIACN_REG));
@@ -184,8 +184,8 @@ int lmp91k_config(u8 * data)
 
 
 /**
- * Отправить датчик в глубокий сон
- * предварительно нужно выбрать датчик
+ * РћС‚РїСЂР°РІРёС‚СЊ РґР°С‚С‡РёРє РІ РіР»СѓР±РѕРєРёР№ СЃРѕРЅ
+ * РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕ РЅСѓР¶РЅРѕ РІС‹Р±СЂР°С‚СЊ РґР°С‚С‡РёРє
  */
 int lmp91k_stop(void)
 {
@@ -200,11 +200,11 @@ int lmp91k_stop(void)
 }
 
 /**
- * Выдать сопротивление резистора Rtia
+ * Р’С‹РґР°С‚СЊ СЃРѕРїСЂРѕС‚РёРІР»РµРЅРёРµ СЂРµР·РёСЃС‚РѕСЂР° Rtia
  */
 int lmp91k_get_tia_gain(u8 reg)
 {
-    int res = -1;		/* Внешнее сопротивление подключено */
+    int res = -1;		/* Р’РЅРµС€РЅРµРµ СЃРѕРїСЂРѕС‚РёРІР»РµРЅРёРµ РїРѕРґРєР»СЋС‡РµРЅРѕ */
     reg >>= 2;
     reg &= 0x07;
 
@@ -243,7 +243,7 @@ int lmp91k_get_tia_gain(u8 reg)
     return res;
 }
 
-/* Выдать знак смещения*/
+/* Р’С‹РґР°С‚СЊ Р·РЅР°Рє СЃРјРµС‰РµРЅРёСЏ*/
 int lmp91k_get_sign(u8 reg)
 {
     if (reg & 0x10) {
@@ -255,15 +255,15 @@ int lmp91k_get_sign(u8 reg)
 
 
 /**
- * Выдать напряжение смещения В МИЛЛИВОЛЬТАХ!
- * Vref считаем как 2500 mv
+ * Р’С‹РґР°С‚СЊ РЅР°РїСЂСЏР¶РµРЅРёРµ СЃРјРµС‰РµРЅРёСЏ Р’ РњРР›Р›РР’РћР›Р¬РўРђРҐ!
+ * Vref СЃС‡РёС‚Р°РµРј РєР°Рє 2500 mv
  */
 int lmp91k_get_bias(u8 reg)
 {
     int res = 0;
     u8 bias = reg & 0x0F;
 
-    /* Внешний референс */
+    /* Р’РЅРµС€РЅРёР№ СЂРµС„РµСЂРµРЅСЃ */
     switch (bias) {
     case 1:
 	res = 1;
@@ -324,7 +324,7 @@ int lmp91k_get_bias(u8 reg)
 }
 
 /**
- * Внутренний ноль - выдать в МИЛЛИВОЛЬТАХ!
+ * Р’РЅСѓС‚СЂРµРЅРЅРёР№ РЅРѕР»СЊ - РІС‹РґР°С‚СЊ РІ РњРР›Р›РР’РћР›Р¬РўРђРҐ!
  */
 int lmp91k_get_int_zero(u8 reg)
 {
@@ -352,7 +352,7 @@ int lmp91k_get_int_zero(u8 reg)
 }
 
 /**
- * Нагрузочный регистр
+ * РќР°РіСЂСѓР·РѕС‡РЅС‹Р№ СЂРµРіРёСЃС‚СЂ
  */
 int lmp91k_get_rload(u8 reg)
 {
