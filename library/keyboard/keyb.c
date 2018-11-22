@@ -1,27 +1,27 @@
 /***************************************************************************
- *                  Драйвер матричной клавиатуры 2x4 
+ *                  Р”СЂР°Р№РІРµСЂ РјР°С‚СЂРёС‡РЅРѕР№ РєР»Р°РІРёР°С‚СѓСЂС‹ 2x4 
  *                                v 1.0
- *                  Copyright (c) Кизим Игорь aka Igoryosha
+ *                  Copyright (c) РљРёР·РёРј РРіРѕСЂСЊ aka Igoryosha
  *                        Website : lobotryasy.net 
  *
- *		    i.rau cделал это для STM32	
+ *		    i.rau cРґРµР»Р°Р» СЌС‚Рѕ РґР»СЏ STM32	
  *			boxeur@mail.ru
  ***************************************************************************/
 #include "keyb.h"
 
 
-#define MAX_VALUE   20		/* Антидребезговая выдержка времени */
+#define MAX_VALUE   20		/* РђРЅС‚РёРґСЂРµР±РµР·РіРѕРІР°СЏ РІС‹РґРµСЂР¶РєР° РІСЂРµРјРµРЅРё */
 
-/* Подключение строк (выход микроконтроллера) */
-#define ROW_PORT            GPIOB	/* Порт, подключённый к строкам (к выходу) */
-#define ROW_GPIO_PIN1       GPIO_Pin_4  /* линия 1  */
-#define ROW_GPIO_PIN2       GPIO_Pin_5  /* линия 2  */
+/* РџРѕРґРєР»СЋС‡РµРЅРёРµ СЃС‚СЂРѕРє (РІС‹С…РѕРґ РјРёРєСЂРѕРєРѕРЅС‚СЂРѕР»Р»РµСЂР°) */
+#define ROW_PORT            GPIOB	/* РџРѕСЂС‚, РїРѕРґРєР»СЋС‡С‘РЅРЅС‹Р№ Рє СЃС‚СЂРѕРєР°Рј (Рє РІС‹С…РѕРґСѓ) */
+#define ROW_GPIO_PIN1       GPIO_Pin_4  /* Р»РёРЅРёСЏ 1  */
+#define ROW_GPIO_PIN2       GPIO_Pin_5  /* Р»РёРЅРёСЏ 2  */
 #define ROW_GPIO_CLK        RCC_AHB1Periph_GPIOB
 
-#define NUM_ROW             2	/* Количество строк клавиатуры */
+#define NUM_ROW             2	/* РљРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂРѕРє РєР»Р°РІРёР°С‚СѓСЂС‹ */
 
 
-/* Подключение столбцов (вход микроконтроллера) */
+/* РџРѕРґРєР»СЋС‡РµРЅРёРµ СЃС‚РѕР»Р±С†РѕРІ (РІС…РѕРґ РјРёРєСЂРѕРєРѕРЅС‚СЂРѕР»Р»РµСЂР°) */
 #define COLUMN_PORT         GPIOD
 #define COLUMN_GPIO_PIN1    GPIO_Pin_0     // PD.00 - A
 #define COLUMN_GPIO_PIN2    GPIO_Pin_1     // PD.01 - B
@@ -30,15 +30,15 @@
 #define COLUMN_GPIO_CLK     RCC_AHB1Periph_GPIOD  
 #define FIRST_BIT_COLUMN     0
 
-#define NUM_COLUMN           4	/* Количество столбцов клавиатуры */
+#define NUM_COLUMN           4	/* РљРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚РѕР»Р±С†РѕРІ РєР»Р°РІРёР°С‚СѓСЂС‹ */
 
 
 const uint16_t KEYPAD_ROW[] = { ROW_GPIO_PIN1, ROW_GPIO_PIN2 };
 const uint16_t KEYPAD_COLUMN[] = { COLUMN_GPIO_PIN1, COLUMN_GPIO_PIN2, COLUMN_GPIO_PIN3, COLUMN_GPIO_PIN4 };
 
-/* антидребезг */
+/* Р°РЅС‚РёРґСЂРµР±РµР·Рі */
 static struct {
-    volatile char ScanKey;	/* Переменная для сохранения кода нажатой кнопки */
+    volatile char ScanKey;	/* РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ РєРѕРґР° РЅР°Р¶Р°С‚РѕР№ РєРЅРѕРїРєРё */
     char lastkey;
     char counter;
 } bounce_key;
@@ -55,23 +55,23 @@ static char* keykodes[2][4] = {
 };
 */
 
-/* Проверка нажатия хотя бы одной кнопки */
+/* РџСЂРѕРІРµСЂРєР° РЅР°Р¶Р°С‚РёСЏ С…РѕС‚СЏ Р±С‹ РѕРґРЅРѕР№ РєРЅРѕРїРєРё */
 /*static*/ bool KeypadCheck(void);
 
 
 
 /**
- * Инициализация клавиатуры 2x4
- * Нам нужно 2 порта на выход и 4 на вход
+ * РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РєР»Р°РІРёР°С‚СѓСЂС‹ 2x4
+ * РќР°Рј РЅСѓР¶РЅРѕ 2 РїРѕСЂС‚Р° РЅР° РІС‹С…РѕРґ Рё 4 РЅР° РІС…РѕРґ
  */
 void KeypadInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    /* Тактирование разрешить  */
+    /* РўР°РєС‚РёСЂРѕРІР°РЅРёРµ СЂР°Р·СЂРµС€РёС‚СЊ  */
     RCC_AHB1PeriphClockCmd(ROW_GPIO_CLK | COLUMN_GPIO_CLK, ENABLE);
 
-    /* Формирование 2-х портов ROW PB.04..PB.05 - на выход */
+    /* Р¤РѕСЂРјРёСЂРѕРІР°РЅРёРµ 2-С… РїРѕСЂС‚РѕРІ ROW PB.04..PB.05 - РЅР° РІС‹С…РѕРґ */
     GPIO_InitStructure.GPIO_Pin = ROW_GPIO_PIN1 | ROW_GPIO_PIN2;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -80,7 +80,7 @@ void KeypadInit(void)
     GPIO_Init(ROW_PORT, &GPIO_InitStructure);
 
 
-    /* Формирование 4-х портов Column на вход PB.04...PB.06, +подключение подтягивающих резисторов */
+    /* Р¤РѕСЂРјРёСЂРѕРІР°РЅРёРµ 4-С… РїРѕСЂС‚РѕРІ Column РЅР° РІС…РѕРґ PB.04...PB.06, +РїРѕРґРєР»СЋС‡РµРЅРёРµ РїРѕРґС‚СЏРіРёРІР°СЋС‰РёС… СЂРµР·РёСЃС‚РѕСЂРѕРІ */
     GPIO_InitStructure.GPIO_Pin = COLUMN_GPIO_PIN1 | COLUMN_GPIO_PIN2 | COLUMN_GPIO_PIN3 | COLUMN_GPIO_PIN4;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_PuPd = /*GPIO_PuPd_NOPULL | */ GPIO_PuPd_UP;
@@ -91,17 +91,17 @@ void KeypadInit(void)
 }
 
 /**
- * Проверка нажатия хотя бы одной кнопки
+ * РџСЂРѕРІРµСЂРєР° РЅР°Р¶Р°С‚РёСЏ С…РѕС‚СЏ Р±С‹ РѕРґРЅРѕР№ РєРЅРѕРїРєРё
  */
 /*static*/ bool KeypadCheck(void)
 {
     u16 temp;
 
-    /* Установил на всех выходах клавиатуры (на выходах строк) '0' */
+    /* РЈСЃС‚Р°РЅРѕРІРёР» РЅР° РІСЃРµС… РІС‹С…РѕРґР°С… РєР»Р°РІРёР°С‚СѓСЂС‹ (РЅР° РІС‹С…РѕРґР°С… СЃС‚СЂРѕРє) '0' */
     GPIO_ResetBits(ROW_PORT, ROW_GPIO_PIN1);
     GPIO_ResetBits(ROW_PORT, ROW_GPIO_PIN2);
 
-    /* Проверяю нажатие (0), если да - возвращаю true */
+    /* РџСЂРѕРІРµСЂСЏСЋ РЅР°Р¶Р°С‚РёРµ (0), РµСЃР»Рё РґР° - РІРѕР·РІСЂР°С‰Р°СЋ true */
     for (int i = 0; i < NUM_COLUMN; i++) {
 	temp = GPIO_ReadInputDataBit(COLUMN_PORT, KEYPAD_COLUMN[i]);
 	if (!temp) {
@@ -113,7 +113,7 @@ void KeypadInit(void)
 }
 
 /**
- *   Получение кода нажатой кнопки
+ *   РџРѕР»СѓС‡РµРЅРёРµ РєРѕРґР° РЅР°Р¶Р°С‚РѕР№ РєРЅРѕРїРєРё
  */
 char KeypadRead(void)
 {
@@ -123,35 +123,35 @@ char KeypadRead(void)
 }
 
 /**
- * Функция сканирования клавиатуры (запускается в прерывании таймера)
+ * Р¤СѓРЅРєС†РёСЏ СЃРєР°РЅРёСЂРѕРІР°РЅРёСЏ РєР»Р°РІРёР°С‚СѓСЂС‹ (Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ РІ РїСЂРµСЂС‹РІР°РЅРёРё С‚Р°Р№РјРµСЂР°)
  */
 void KeypadScan(void)
 {
     char row, column, temp;
     char key = 0;
 
-    /* Если ни одна кнопка не нажата - досвидос! */
+    /* Р•СЃР»Рё РЅРё РѕРґРЅР° РєРЅРѕРїРєР° РЅРµ РЅР°Р¶Р°С‚Р° - РґРѕСЃРІРёРґРѕСЃ! */
     if (KeypadCheck() == 0) {
 	bounce_key.counter = 0;
 	return;
     }
 
-    /* Перебираю строки клавиатуры */
+    /* РџРµСЂРµР±РёСЂР°СЋ СЃС‚СЂРѕРєРё РєР»Р°РІРёР°С‚СѓСЂС‹ */
     for (row = 0; row < NUM_ROW; row++) {
 
-	/* Установил на обеих выходах строк '1' */
+	/* РЈСЃС‚Р°РЅРѕРІРёР» РЅР° РѕР±РµРёС… РІС‹С…РѕРґР°С… СЃС‚СЂРѕРє '1' */
 	GPIO_SetBits(ROW_PORT, ROW_GPIO_PIN1);
 	GPIO_SetBits(ROW_PORT, ROW_GPIO_PIN2);
 
-	/* Устанавливаю на очередной строке клавиатуры '0' */
+	/* РЈСЃС‚Р°РЅР°РІР»РёРІР°СЋ РЅР° РѕС‡РµСЂРµРґРЅРѕР№ СЃС‚СЂРѕРєРµ РєР»Р°РІРёР°С‚СѓСЂС‹ '0' */
 	GPIO_ResetBits(ROW_PORT, KEYPAD_ROW[row]);
 	asm(" nop ");
-	/* Сохраняю значения всех 4-х входов (столбцов) */
+	/* РЎРѕС…СЂР°РЅСЏСЋ Р·РЅР°С‡РµРЅРёСЏ РІСЃРµС… 4-С… РІС…РѕРґРѕРІ (СЃС‚РѕР»Р±С†РѕРІ) */
 	temp = GPIO_ReadInputData(COLUMN_PORT);
 
-	/* Опрашиваю столбцы клавиатуры и получаю код кнопки */
+	/* РћРїСЂР°С€РёРІР°СЋ СЃС‚РѕР»Р±С†С‹ РєР»Р°РІРёР°С‚СѓСЂС‹ Рё РїРѕР»СѓС‡Р°СЋ РєРѕРґ РєРЅРѕРїРєРё */
 	for (column = 0; column < NUM_COLUMN; column++) {
-	    /* Если подключенные порты идут последовательно. Иначе переделать этот код */
+	    /* Р•СЃР»Рё РїРѕРґРєР»СЋС‡РµРЅРЅС‹Рµ РїРѕСЂС‚С‹ РёРґСѓС‚ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕ. РРЅР°С‡Рµ РїРµСЂРµРґРµР»Р°С‚СЊ СЌС‚РѕС‚ РєРѕРґ */
 	    if ((temp & (1 << (column + FIRST_BIT_COLUMN))) == 0) {
 		key = keykodes[row][column];
 	    }
