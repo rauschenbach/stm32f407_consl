@@ -1,5 +1,4 @@
-/* Сервисные функции: ведение лога, подстройка таймера, запись на SD карту */
-
+/* РЎРµСЂРІРёСЃРЅС‹Рµ С„СѓРЅРєС†РёРё: РІРµРґРµРЅРёРµ Р»РѕРіР°, РїРѕРґСЃС‚СЂРѕР№РєР° С‚Р°Р№РјРµСЂР°, Р·Р°РїРёСЃСЊ РЅР° SD РєР°СЂС‚Сѓ */
 #include "status.h"
 #include "userfunc.h"
 #include "log.h"
@@ -7,29 +6,29 @@
 #include "ff.h"
 
 
-#define	  	MAX_TIME_STRLEN		        26	/* Длина строки со временем  */
-#define   	MAX_DATA_FILE_SIZE              134217728	/* 128 Мбайт */
-#define   	MAX_LOG_FILE_SIZE		1048576	/* 1 Мбайт */
-#define   	MAX_START_FILE_SIZE		1048576	/* 1 Мбайт */
+#define	  	MAX_TIME_STRLEN		        26	/* Р”Р»РёРЅР° СЃС‚СЂРѕРєРё СЃРѕ РІСЂРµРјРµРЅРµРј  */
+#define   	MAX_DATA_FILE_SIZE              134217728	/* 128 РњР±Р°Р№С‚ */
+#define   	MAX_LOG_FILE_SIZE		1048576	/* 1 РњР±Р°Р№С‚ */
+#define   	MAX_START_FILE_SIZE		1048576	/* 1 РњР±Р°Р№С‚ */
 
-#define   	MAX_FILE_NAME_LEN	        31	/* Длина файла включая имя директории с '\0' */
+#define   	MAX_FILE_NAME_LEN	        31	/* Р”Р»РёРЅР° С„Р°Р№Р»Р° РІРєР»СЋС‡Р°СЏ РёРјСЏ РґРёСЂРµРєС‚РѕСЂРёРё СЃ '\0' */
 #define		LOG_FILE_NAME		        "file.log"
 #define		START_FILE_NAME		        "start.log"
 #define 	ERROR_LOG_NAME		        "error.log"
 
 
 /*************************************************************************************
- *     Эти переменные не видимы в других файлах 
+ *     Р­С‚Рё РїРµСЂРµРјРµРЅРЅС‹Рµ РЅРµ РІРёРґРёРјС‹ РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С… 
  *************************************************************************************/
-static FATFS fatfs;		/* File system object - можно убрать из global? нет! */
-static DIR dir;			/* Директория где храница все файло - можно убрать из global? */
+static FATFS fatfs;		/* File system object - РјРѕР¶РЅРѕ СѓР±СЂР°С‚СЊ РёР· global? РЅРµС‚! */
+static DIR dir;			/* Р”РёСЂРµРєС‚РѕСЂРёСЏ РіРґРµ С…СЂР°РЅРёС†Р° РІСЃРµ С„Р°Р№Р»Рѕ - РјРѕР¶РЅРѕ СѓР±СЂР°С‚СЊ РёР· global? */
 static FIL start_file;		/* Start file object */
 static FIL log_file;		/* Log file object */
-static FIL data_file;		/* File object для АЦП */
+static FIL data_file;		/* File object РґР»СЏ РђР¦Рџ */
 
 /**
- * Инициализация файловой системы
- * При монтировании читаем данные с FLASH
+ * РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С„Р°Р№Р»РѕРІРѕР№ СЃРёСЃС‚РµРјС‹
+ * РџСЂРё РјРѕРЅС‚РёСЂРѕРІР°РЅРёРё С‡РёС‚Р°РµРј РґР°РЅРЅС‹Рµ СЃ FLASH
  */
 int log_mount_fs(void)
 {
@@ -46,7 +45,7 @@ int log_mount_fs(void)
 }
 
 /**
- * Карта монтирована или нет?
+ * РљР°СЂС‚Р° РјРѕРЅС‚РёСЂРѕРІР°РЅР° РёР»Рё РЅРµС‚?
  */
 bool log_check_mounted(void)
 {
@@ -55,33 +54,33 @@ bool log_check_mounted(void)
 
 
 /**
- * Открыть LOG файл, куда будем бросать сообщения
+ * РћС‚РєСЂС‹С‚СЊ LOG С„Р°Р№Р», РєСѓРґР° Р±СѓРґРµРј Р±СЂРѕСЃР°С‚СЊ СЃРѕРѕР±С‰РµРЅРёСЏ
  */
 int log_open_log_file(void)
 {
     int res = RES_OPEN_LOG_ERR;
     int i;
 
-    /* Открываем старый лог и ставим указатель на конец */
+    /* РћС‚РєСЂС‹РІР°РµРј СЃС‚Р°СЂС‹Р№ Р»РѕРі Рё СЃС‚Р°РІРёРј СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РєРѕРЅРµС† */
     do {
 	if (log_check_mounted() == false) {
 	    break;
 	}
 
-	/* Если все ОК - открыли log */
+	/* Р•СЃР»Рё РІСЃРµ РћРљ - РѕС‚РєСЂС‹Р»Рё log */
 	res = f_open(&log_file, LOG_FILE_NAME, FA_WRITE | FA_READ | FA_OPEN_ALWAYS);
 	if (res) {
 	    break;
 	}
 
-	/* Определим размер и будем дописывать */
+	/* РћРїСЂРµРґРµР»РёРј СЂР°Р·РјРµСЂ Рё Р±СѓРґРµРј РґРѕРїРёСЃС‹РІР°С‚СЊ */
 	i = f_size(&log_file);
 	if (i > MAX_LOG_FILE_SIZE) {
 	    f_truncate(&log_file);
 	    i = 0;
 	}
 
-	/* Переставим указатель файла */
+	/* РџРµСЂРµСЃС‚Р°РІРёРј СѓРєР°Р·Р°С‚РµР»СЊ С„Р°Р№Р»Р° */
 	f_lseek(&log_file, i);
 	res = RES_NO_ERROR;
     } while (0);
@@ -89,29 +88,29 @@ int log_open_log_file(void)
 }
 
 /**
- * Запись строки в лог файл, возвращаем сколько записали. С временем ВСЕГДА!
- * Режем по 10 мБайт?
+ * Р—Р°РїРёСЃСЊ СЃС‚СЂРѕРєРё РІ Р»РѕРі С„Р°Р№Р», РІРѕР·РІСЂР°С‰Р°РµРј СЃРєРѕР»СЊРєРѕ Р·Р°РїРёСЃР°Р»Рё. РЎ РІСЂРµРјРµРЅРµРј Р’РЎР•Р“Р”Рђ!
+ * Р РµР¶РµРј РїРѕ 10 РјР‘Р°Р№С‚?
  */
 int log_write_log_file(char *fmt, ...)
 {
     char str[256];
     FRESULT res;		/* Result code */
-    unsigned bw;		/* Прочитано или записано байт  */
+    unsigned bw;		/* РџСЂРѕС‡РёС‚Р°РЅРѕ РёР»Рё Р·Р°РїРёСЃР°РЅРѕ Р±Р°Р№С‚  */
     int i;
     va_list p_vargs;		/* return value from vsnprintf  */
 
     do {
-	/* Не монтировано (нет фс - работаем от PC), или с карточкой проблемы */
+	/* РќРµ РјРѕРЅС‚РёСЂРѕРІР°РЅРѕ (РЅРµС‚ С„СЃ - СЂР°Р±РѕС‚Р°РµРј РѕС‚ PC), РёР»Рё СЃ РєР°СЂС‚РѕС‡РєРѕР№ РїСЂРѕР±Р»РµРјС‹ */
 	if (log_file.fs == NULL) {
 	    res = (FRESULT)RES_MOUNT_ERR;
 	    break;
 	}
 
-	/* Получаем текущее время - MAX_TIME_STRLEN символов с пробелом - всегда пишем */
+	/* РџРѕР»СѓС‡Р°РµРј С‚РµРєСѓС‰РµРµ РІСЂРµРјСЏ - MAX_TIME_STRLEN СЃРёРјРІРѕР»РѕРІ СЃ РїСЂРѕР±РµР»РѕРј - РІСЃРµРіРґР° РїРёС€РµРј */
 	i = status_get_time();
         sec_to_str((long)i, str);
 
-	/* Разбираем строку */
+	/* Р Р°Р·Р±РёСЂР°РµРј СЃС‚СЂРѕРєСѓ */
 	va_start(p_vargs, fmt);
 	i = vsnprintf(str + MAX_TIME_STRLEN, sizeof(str), fmt, p_vargs);
 	va_end(p_vargs);
@@ -120,10 +119,10 @@ int log_write_log_file(char *fmt, ...)
 	    break;
 	}
 
-	/* Заменим переносы строки на UNIX (не с начала!) */
+	/* Р—Р°РјРµРЅРёРј РїРµСЂРµРЅРѕСЃС‹ СЃС‚СЂРѕРєРё РЅР° UNIX (РЅРµ СЃ РЅР°С‡Р°Р»Р°!) */
 	for (i = MAX_TIME_STRLEN + 4; i < sizeof(str) - 3; i++) {
 	    if (str[i] == 0x0d || str[i] == 0x0a) {
-		str[i] = 0x0d;	// перевод строки
+		str[i] = 0x0d;	// РїРµСЂРµРІРѕРґ СЃС‚СЂРѕРєРё
 		str[i + 1] = 0x0a;	// Windows
 		str[i + 2] = 0;
 		break;
@@ -136,7 +135,7 @@ int log_write_log_file(char *fmt, ...)
 	    break;
 	}
 
-	/* Обязательно запишем! */
+	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ Р·Р°РїРёС€РµРј! */
 	res = f_sync(&log_file);
 	if (res) {
 	    res = (FRESULT)RES_SYNC_LOG_ERR;
@@ -149,7 +148,7 @@ int log_write_log_file(char *fmt, ...)
 
 
 /**
- * Закрыть лог-файл
+ * Р—Р°РєСЂС‹С‚СЊ Р»РѕРі-С„Р°Р№Р»
  */
 int log_close_log_file(void)
 {
@@ -163,34 +162,34 @@ int log_close_log_file(void)
 }
 
 /**
- * Здесь должно быть и открытие и запись фала данных
- * плюс запись строки в файл START
+ * Р—РґРµСЃСЊ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Рё РѕС‚РєСЂС‹С‚РёРµ Рё Р·Р°РїРёСЃСЊ С„Р°Р»Р° РґР°РЅРЅС‹С…
+ * РїР»СЋСЃ Р·Р°РїРёСЃСЊ СЃС‚СЂРѕРєРё РІ С„Р°Р№Р» START
  */
 int log_write_data_file(void *data, int len)
 {
-    unsigned bw;		/* Прочитано или записано байт  */
+    unsigned bw;		/* РџСЂРѕС‡РёС‚Р°РЅРѕ РёР»Рё Р·Р°РїРёСЃР°РЅРѕ Р±Р°Р№С‚  */
     FRESULT res;		/* Result code */
 
     res = f_write(&data_file, (char *) data, len, &bw);
     if (res) {
 	return RES_WRITE_DATA_ERR;
     }
-    return RES_NO_ERROR;	/* Записали OK */
+    return RES_NO_ERROR;	/* Р—Р°РїРёСЃР°Р»Рё OK */
 }
 
 
 /**
- * Закрыть файл АЦП-перед этим сбросим буферы на диск 
+ * Р—Р°РєСЂС‹С‚СЊ С„Р°Р№Р» РђР¦Рџ-РїРµСЂРµРґ СЌС‚РёРј СЃР±СЂРѕСЃРёРј Р±СѓС„РµСЂС‹ РЅР° РґРёСЃРє 
  */
 int log_close_data_file(void)
 {
     FRESULT res;		/* Result code */
 
-    if (data_file.fs == NULL) {	// нет файла еще
+    if (data_file.fs == NULL) {	// РЅРµС‚ С„Р°Р№Р»Р° РµС‰Рµ
 	return RES_CLOSE_DATA_ERR;
     }
 
-    /* Обязательно запишем */
+    /* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ Р·Р°РїРёС€РµРј */
     res = f_sync(&data_file);
     if (res) {
 	return RES_CLOSE_DATA_ERR;
@@ -200,5 +199,5 @@ int log_close_data_file(void)
     if (res) {
 	return RES_CLOSE_DATA_ERR;
     }
-    return FR_OK;		/* Все нормально! */
+    return FR_OK;		/* Р’СЃРµ РЅРѕСЂРјР°Р»СЊРЅРѕ! */
 }
