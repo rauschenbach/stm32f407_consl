@@ -1,7 +1,7 @@
 /***********************************************************************
- *    Меню выбора на ЖК дисплее
- *    За образец взято меню на миландре
- *    IdleFunc() поменять на реальную функцию в конце
+ *    РњРµРЅСЋ РІС‹Р±РѕСЂР° РЅР° Р–Рљ РґРёСЃРїР»РµРµ
+ *    Р—Р° РѕР±СЂР°Р·РµС† РІР·СЏС‚Рѕ РјРµРЅСЋ РЅР° РјРёР»Р°РЅРґСЂРµ
+ *    IdleFunc() РїРѕРјРµРЅСЏС‚СЊ РЅР° СЂРµР°Р»СЊРЅСѓСЋ С„СѓРЅРєС†РёСЋ РІ РєРѕРЅС†Рµ
  ***********************************************************************/
 #include <string.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@
 #include "menu.h"
 #include "main.h"
 
-/* статические функции */
+/* СЃС‚Р°С‚РёС‡РµСЃРєРёРµ С„СѓРЅРєС†РёРё */
 static void vMenuTask(void *);
 static void menu_init(void);
 static void make_rus_menu(void);
@@ -27,7 +27,7 @@ static void ReadKey(void);
 static bool enterMenu(menu_state_en);
 static bool leaveMenu(void);
 
-/* Функции обработки меню */
+/* Р¤СѓРЅРєС†РёРё РѕР±СЂР°Р±РѕС‚РєРё РјРµРЅСЋ */
 static void menu_rtc_set(void);
 static void main_chan_set(void);
 static void menu_pump_set(void);
@@ -65,7 +65,7 @@ static struct sMenu {
 };
 
 /**
- * Структура для хождения по уровням меню в основном режиме 
+ * РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ С…РѕР¶РґРµРЅРёСЏ РїРѕ СѓСЂРѕРІРЅСЏРј РјРµРЅСЋ РІ РѕСЃРЅРѕРІРЅРѕРј СЂРµР¶РёРјРµ 
  */
 static struct {
     u32 MenuItemIndex;
@@ -77,104 +77,104 @@ static struct {
 } MainMenuShifter;
 
 /**
- * Для настройки тех меню, где нужно вводить данные
+ * Р”Р»СЏ РЅР°СЃС‚СЂРѕР№РєРё С‚РµС… РјРµРЅСЋ, РіРґРµ РЅСѓР¶РЅРѕ РІРІРѕРґРёС‚СЊ РґР°РЅРЅС‹Рµ
  */
 static struct {
-    char str0[32];		/* Буфер для ввода */
-    int x_index;		/* Индикатор нажатия вправо - влево */
-    int y_index;		/* ндикатор нажатия вверх - вниз */
-    int sel_index;		/* Выбор. т.е. "Применить"  */
-    int rtc_time;		/* Время RTC для подстройки */
+    char str0[32];		/* Р‘СѓС„РµСЂ РґР»СЏ РІРІРѕРґР° */
+    int x_index;		/* РРЅРґРёРєР°С‚РѕСЂ РЅР°Р¶Р°С‚РёСЏ РІРїСЂР°РІРѕ - РІР»РµРІРѕ */
+    int y_index;		/* РЅРґРёРєР°С‚РѕСЂ РЅР°Р¶Р°С‚РёСЏ РІРІРµСЂС… - РІРЅРёР· */
+    int sel_index;		/* Р’С‹Р±РѕСЂ. С‚.Рµ. "РџСЂРёРјРµРЅРёС‚СЊ"  */
+    int rtc_time;		/* Р’СЂРµРјСЏ RTC РґР»СЏ РїРѕРґСЃС‚СЂРѕР№РєРё */
     struct tm t0;
 } TimeMenuData;
 
-/* Не люблю так делать, но сделаю их внешними из другого модуля !!! */
+/* РќРµ Р»СЋР±Р»СЋ С‚Р°Рє РґРµР»Р°С‚СЊ, РЅРѕ СЃРґРµР»Р°СЋ РёС… РІРЅРµС€РЅРёРјРё РёР· РґСЂСѓРіРѕРіРѕ РјРѕРґСѓР»СЏ !!! */
 extern channel_params_settings chan_set[NUM_ALL_CHAN];
 extern extra_params_settings extra_set;
 
-/* КА которые определяет какая настройка параметров щас идет */
+/* РљРђ РєРѕС‚РѕСЂС‹Рµ РѕРїСЂРµРґРµР»СЏРµС‚ РєР°РєР°СЏ РЅР°СЃС‚СЂРѕР№РєР° РїР°СЂР°РјРµС‚СЂРѕРІ С‰Р°СЃ РёРґРµС‚ */
 static menu_state_en menu_state = MAIN_MENU_STATE;
 
 
 /************************* Third level menu ********************************************/
-/* Уровни для меню "настройки" */
+/* РЈСЂРѕРІРЅРё РґР»СЏ РјРµРЅСЋ "РЅР°СЃС‚СЂРѕР№РєРё" */
 
-/* Общие настройки  */
+/* РћР±С‰РёРµ РЅР°СЃС‚СЂРѕР№РєРё  */
 struct sMenuItem CommonSettingsMenuItems[] = {
-    {"Дата/Время", menu_rtc_set, NULL},
-    {"Произ-ть насоса", menu_pump_set, NULL},
-    {"Звуковое оповещение", menu_volume_set, NULL},
-    {"Память", IdleFunc, NULL},
+    {"Р”Р°С‚Р°/Р’СЂРµРјСЏ", menu_rtc_set, NULL},
+    {"РџСЂРѕРёР·-С‚СЊ РЅР°СЃРѕСЃР°", menu_pump_set, NULL},
+    {"Р—РІСѓРєРѕРІРѕРµ РѕРїРѕРІРµС‰РµРЅРёРµ", menu_volume_set, NULL},
+    {"РџР°РјСЏС‚СЊ", IdleFunc, NULL},
 };
-struct sMenu CommonSettingsMenu = { "Общие настройки", CommonSettingsMenuItems, countof(CommonSettingsMenuItems) };
+struct sMenu CommonSettingsMenu = { "РћР±С‰РёРµ РЅР°СЃС‚СЂРѕР№РєРё", CommonSettingsMenuItems, countof(CommonSettingsMenuItems) };
 
-/* Настройки каналов  */
+/* РќР°СЃС‚СЂРѕР№РєРё РєР°РЅР°Р»РѕРІ  */
 struct sMenuItem ChannelSettingsMenuItems[] = {
-    {"Основные настройки", main_chan_set, NULL},
-    {"Коэффициенты каналов", chan_coef_set, NULL},
-    {"Диапазоны измерений", menu_ranges_set, NULL},
-    {"Доп. настройки", addit_chan_set, NULL},
+    {"РћСЃРЅРѕРІРЅС‹Рµ РЅР°СЃС‚СЂРѕР№РєРё", main_chan_set, NULL},
+    {"РљРѕСЌС„С„РёС†РёРµРЅС‚С‹ РєР°РЅР°Р»РѕРІ", chan_coef_set, NULL},
+    {"Р”РёР°РїР°Р·РѕРЅС‹ РёР·РјРµСЂРµРЅРёР№", menu_ranges_set, NULL},
+    {"Р”РѕРї. РЅР°СЃС‚СЂРѕР№РєРё", addit_chan_set, NULL},
 };
-struct sMenu ChannelSettingsMenu = { "Настройка каналов", ChannelSettingsMenuItems, countof(ChannelSettingsMenuItems) };
+struct sMenu ChannelSettingsMenu = { "РќР°СЃС‚СЂРѕР№РєР° РєР°РЅР°Р»РѕРІ", ChannelSettingsMenuItems, countof(ChannelSettingsMenuItems) };
 
-/* Калибровка каналов */
+/* РљР°Р»РёР±СЂРѕРІРєР° РєР°РЅР°Р»РѕРІ */
 struct sMenuItem CalibrMenuItems[] = {
-    {"Точки калибровки", IdleFunc, NULL},
-    {"Ввод", IdleFunc, NULL}
+    {"РўРѕС‡РєРё РєР°Р»РёР±СЂРѕРІРєРё", IdleFunc, NULL},
+    {"Р’РІРѕРґ", IdleFunc, NULL}
 };
-struct sMenu CalibrMenu = { "Калибровка", CalibrMenuItems, countof(CalibrMenuItems) };
+struct sMenu CalibrMenu = { "РљР°Р»РёР±СЂРѕРІРєР°", CalibrMenuItems, countof(CalibrMenuItems) };
 
-/* Обнуление каналов */
+/* РћР±РЅСѓР»РµРЅРёРµ РєР°РЅР°Р»РѕРІ */
 struct sMenuItem ZeroinMenuItems[] = {
-    {"Все каналы", zero_all_chan, NULL},
-    {"Выбранные каналы", IdleFunc, NULL},
+    {"Р’СЃРµ РєР°РЅР°Р»С‹", zero_all_chan, NULL},
+    {"Р’С‹Р±СЂР°РЅРЅС‹Рµ РєР°РЅР°Р»С‹", IdleFunc, NULL},
 };
-struct sMenu ZeroinMenu = { "Обнуление каналов", ZeroinMenuItems, countof(ZeroinMenuItems) };
+struct sMenu ZeroinMenu = { "РћР±РЅСѓР»РµРЅРёРµ РєР°РЅР°Р»РѕРІ", ZeroinMenuItems, countof(ZeroinMenuItems) };
 
 /**************************************** Second level menu *********************************/
-/* Настройки */
+/* РќР°СЃС‚СЂРѕР№РєРё */
 struct sMenuItem SettingsMenuItems[] = {
-    {"Общие настройки", IdleFunc, &CommonSettingsMenu},
-    {"Настройка каналов", IdleFunc, &ChannelSettingsMenu},
-    {"Калибровка", calibr_menu_set, NULL},
-    {"Обнуление каналов", /*IdleFunc */ zero_all_chan, /*&ZeroinMenu */ NULL}
+    {"РћР±С‰РёРµ РЅР°СЃС‚СЂРѕР№РєРё", IdleFunc, &CommonSettingsMenu},
+    {"РќР°СЃС‚СЂРѕР№РєР° РєР°РЅР°Р»РѕРІ", IdleFunc, &ChannelSettingsMenu},
+    {"РљР°Р»РёР±СЂРѕРІРєР°", calibr_menu_set, NULL},
+    {"РћР±РЅСѓР»РµРЅРёРµ РєР°РЅР°Р»РѕРІ", /*IdleFunc */ zero_all_chan, /*&ZeroinMenu */ NULL}
 };
-struct sMenu SettingsMenu = { "Настройки", SettingsMenuItems, countof(SettingsMenuItems) };
+struct sMenu SettingsMenu = { "РќР°СЃС‚СЂРѕР№РєРё", SettingsMenuItems, countof(SettingsMenuItems) };
 
-/* Измерения  */
+/* РР·РјРµСЂРµРЅРёСЏ  */
 struct sMenuItem MeasMenuItems[] = {
-    {"Все каналы", IdleFunc, NULL},
-    {"Выбранные каналы", IdleFunc, NULL},
+    {"Р’СЃРµ РєР°РЅР°Р»С‹", IdleFunc, NULL},
+    {"Р’С‹Р±СЂР°РЅРЅС‹Рµ РєР°РЅР°Р»С‹", IdleFunc, NULL},
 };
-struct sMenu MeasMenu = { "Измерения", MeasMenuItems, countof(MeasMenuItems) };
+struct sMenu MeasMenu = { "РР·РјРµСЂРµРЅРёСЏ", MeasMenuItems, countof(MeasMenuItems) };
 
-/**************************** Основное меню *******************************************/
+/**************************** РћСЃРЅРѕРІРЅРѕРµ РјРµРЅСЋ *******************************************/
 /* Main menu */
 struct sMenuItem MainMenuItems[] = {
-    {"Настройки", IdleFunc, &SettingsMenu},
-    {"Измерения", menu_acquis_set, NULL},
-    {"О приборе", menu_about_set, NULL}
+    {"РќР°СЃС‚СЂРѕР№РєРё", IdleFunc, &SettingsMenu},
+    {"РР·РјРµСЂРµРЅРёСЏ", menu_acquis_set, NULL},
+    {"Рћ РїСЂРёР±РѕСЂРµ", menu_about_set, NULL}
 };
-struct sMenu MainMenu = { "Главное меню", MainMenuItems, countof(MainMenuItems) };
+struct sMenu MainMenu = { "Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ", MainMenuItems, countof(MainMenuItems) };
 
 /***************************************************************************************/
 /**
- * Обнуление всех каналов. Полное стирание EEPROM 
+ * РћР±РЅСѓР»РµРЅРёРµ РІСЃРµС… РєР°РЅР°Р»РѕРІ. РџРѕР»РЅРѕРµ СЃС‚РёСЂР°РЅРёРµ EEPROM 
  */
 static void zero_all_chan(void)
 {
-    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* Позиция по Y */
+    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* РџРѕР·РёС†РёСЏ РїРѕ Y */
 
     enterMenu(MENU_ZERO_ALL_CHAN_STATE);
 
-    /* Заголовок "Обнуление все каналы" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "РћР±РЅСѓР»РµРЅРёРµ РІСЃРµ РєР°РЅР°Р»С‹" */
     show_caption(20, y_pos[0], ZeroinMenuItems[0].psTitle);
 
     dog_DrawStrP(20, y_pos[1], MENU_FONT, DOG_PSTR(StrZeroinChan0));
     dog_DrawStrP(20, y_pos[2], MENU_FONT, DOG_PSTR(StrZeroinChan1));
     dog_DrawStrP(20, y_pos[3], MENU_FONT, DOG_PSTR(StrZeroinChan2));
 
-    /* Нажатие кнопки "Select" - Стираем всю EEPROM */
+    /* РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" - РЎС‚РёСЂР°РµРј РІСЃСЋ EEPROM */
     if (leaveMenu()) {
 	for (int i = 0; i < NUM_ALL_CHAN; i++) {
 	    memset(&chan_set[i], 0, sizeof(channel_params_settings));
@@ -184,7 +184,7 @@ static void zero_all_chan(void)
     }
 }
 
-/* Меню измерения (со всех включенных каналов) */
+/* РњРµРЅСЋ РёР·РјРµСЂРµРЅРёСЏ (СЃРѕ РІСЃРµС… РІРєР»СЋС‡РµРЅРЅС‹С… РєР°РЅР°Р»РѕРІ) */
 static void menu_acquis_set(void)
 {
     static int half = 0;
@@ -194,13 +194,13 @@ static void menu_acquis_set(void)
 	sensor_start_aqusition();
     }
 
-    /* Заголовок "Измерения" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "РР·РјРµСЂРµРЅРёСЏ" */
     show_caption(20, 90, MainMenuItems[1].psTitle);
 
-    /* Вывести измерение - развернуть по горизонтали или вертикали при нажатии кнопок */
+    /* Р’С‹РІРµСЃС‚Рё РёР·РјРµСЂРµРЅРёРµ - СЂР°Р·РІРµСЂРЅСѓС‚СЊ РїРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»Рё РёР»Рё РІРµСЂС‚РёРєР°Р»Рё РїСЂРё РЅР°Р¶Р°С‚РёРё РєРЅРѕРїРѕРє */
     show_acquis(8, chan_set, vert, half);
 
-    /* Если нажаты кнопки вправо-влево-переключимся на гор. представление */
+    /* Р•СЃР»Рё РЅР°Р¶Р°С‚С‹ РєРЅРѕРїРєРё РІРїСЂР°РІРѕ-РІР»РµРІРѕ-РїРµСЂРµРєР»СЋС‡РёРјСЃСЏ РЅР° РіРѕСЂ. РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ */
     if (TimeMenuData.x_index) {
 	half += TimeMenuData.x_index;
 	half %= 2;
@@ -208,42 +208,42 @@ static void menu_acquis_set(void)
 	TimeMenuData.x_index = 0;
     }
 
-    /* Выставим все измерения сразу */
+    /* Р’С‹СЃС‚Р°РІРёРј РІСЃРµ РёР·РјРµСЂРµРЅРёСЏ СЃСЂР°Р·Сѓ */
     if (TimeMenuData.y_index) {
 	vert = 1;
 	TimeMenuData.y_index = 0;
     }
 
-    /*  Нажатие кнопки "Select" - выходим из измерений или нет? */
+    /*  РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" - РІС‹С…РѕРґРёРј РёР· РёР·РјРµСЂРµРЅРёР№ РёР»Рё РЅРµС‚? */
     leaveMenu();
 }
 
-/* Меню О приборе */
+/* РњРµРЅСЋ Рћ РїСЂРёР±РѕСЂРµ */
 static void menu_about_set(void)
 {
     enterMenu(MENU_ABOUT_STATE);
 
-    /* Заголовок "О приборе" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "Рћ РїСЂРёР±РѕСЂРµ" */
     show_caption(30, 90, MainMenuItems[2].psTitle);
 
     dog_DrawStrP(20, 60, CAPT_FONT, DOG_PSTR(StrAbout0));
     dog_DrawStrP(20, 40, CAPT_FONT, DOG_PSTR(StrAbout1));
 
-    /*  Нажатие кнопки "Select" */
+    /*  РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" */
     leaveMenu();
 }
 
 /**
- * Громкость
+ * Р“СЂРѕРјРєРѕСЃС‚СЊ
  */
 static void menu_volume_set(void)
 {
     enterMenu(MENU_VOLUME_SET_STATE);
 
-    /* Заголовок "Насос" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "РќР°СЃРѕСЃ" */
     show_caption(20, 90, CommonSettingsMenuItems[2].psTitle);
 
-    /* уровень громкости : Меняем положение по X */
+    /* СѓСЂРѕРІРµРЅСЊ РіСЂРѕРјРєРѕСЃС‚Рё : РњРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ РїРѕ X */
     if (TimeMenuData.x_index) {
 	extra_set.sound_level += (TimeMenuData.x_index * 5);
 	if (extra_set.sound_level < 0) {
@@ -255,21 +255,21 @@ static void menu_volume_set(void)
     }
     show_volume(extra_set.sound_level);
 
-    /*  Нажатие кнопки "Select" */
+    /*  РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" */
     leaveMenu();
 }
 
 /**
- * Производительность насоса. Установка
+ * РџСЂРѕРёР·РІРѕРґРёС‚РµР»СЊРЅРѕСЃС‚СЊ РЅР°СЃРѕСЃР°. РЈСЃС‚Р°РЅРѕРІРєР°
  */
 static void menu_pump_set(void)
 {
     enterMenu(MENU_PUMP_SET_STATE);
 
-    /* Заголовок "Насос" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "РќР°СЃРѕСЃ" */
     show_caption(20, 90, CommonSettingsMenuItems[1].psTitle);
 
-    /* Меняем положение по X */
+    /* РњРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ РїРѕ X */
     if (TimeMenuData.x_index) {
 	extra_set.pump_level += (TimeMenuData.x_index * 2);
 	if (extra_set.pump_level < 0) {
@@ -281,23 +281,23 @@ static void menu_pump_set(void)
     }
     show_pump(extra_set.pump_level);
 
-    /*  Нажатие кнопки "Select" */
+    /*  РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" */
     leaveMenu();
 }
 
 /**
- * Установка каналов (часть)
+ * РЈСЃС‚Р°РЅРѕРІРєР° РєР°РЅР°Р»РѕРІ (С‡Р°СЃС‚СЊ)
  */
 static void main_chan_set(void)
 {
-    /* 8 позиции в 4 строках */
+    /* 8 РїРѕР·РёС†РёРё РІ 4 СЃС‚СЂРѕРєР°С… */
     static const u8 x_pos[][8] = {
 	{58, 82},
 	{8},
 	{112},
 	{112},
     };
-    /* Размер (ширина) курсора (так как может менятся) */
+    /* Р Р°Р·РјРµСЂ (С€РёСЂРёРЅР°) РєСѓСЂСЃРѕСЂР° (С‚Р°Рє РєР°Рє РјРѕР¶РµС‚ РјРµРЅСЏС‚СЃСЏ) */
     static const u8 cursor[][8] = {
 	{10, 40},
 	{140},
@@ -305,28 +305,28 @@ static void main_chan_set(void)
 	{40}
     };
 
-    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* Позиция по Y */
+    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* РџРѕР·РёС†РёСЏ РїРѕ Y */
     char str[64];
-    static int i = 0;		/* Столбцы */
-    static int k = 0;		/* строки */
-    static int chan = 0;	/* Номер канала */
+    static int i = 0;		/* РЎС‚РѕР»Р±С†С‹ */
+    static int k = 0;		/* СЃС‚СЂРѕРєРё */
+    static int chan = 0;	/* РќРѕРјРµСЂ РєР°РЅР°Р»Р° */
     static volatile int f = 0;
     int t;
 
-    /* Поменяли состояние */
+    /* РџРѕРјРµРЅСЏР»Рё СЃРѕСЃС‚РѕСЏРЅРёРµ */
     enterMenu(MAIN_SET_CHANNEL_STATE);
 
-    /* Заголовок "Основне настройки" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "РћСЃРЅРѕРІРЅРµ РЅР°СЃС‚СЂРѕР№РєРё" */
     show_caption(20, y_pos[0], ChannelSettingsMenuItems[0].psTitle);
 
-    /* Номер канала если выбираем кнопку вверх/вниз */
+    /* РќРѕРјРµСЂ РєР°РЅР°Р»Р° РµСЃР»Рё РІС‹Р±РёСЂР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· */
     show_onoff_chan(10, y_pos[1], StrNumChan, chan, chan_set[chan].sens_type);
 
-    /* Показываем только если канал включен */
+    /* РџРѕРєР°Р·С‹РІР°РµРј С‚РѕР»СЊРєРѕ РµСЃР»Рё РєР°РЅР°Р» РІРєР»СЋС‡РµРЅ */
     if (chan_set[chan].sens_type) {
 	show_formula(10, y_pos[2], DOG_PSTR(chan_set[chan].formula));
 
-	/* Единицы измерений */
+	/* Р•РґРёРЅРёС†С‹ РёР·РјРµСЂРµРЅРёР№ */
 	t = chan_set[chan].type_units;
 	if (t == MMGM_MODE) {
 	    sprintf(str, "%s%s", StrUnits, StrMg);
@@ -340,26 +340,26 @@ static void main_chan_set(void)
 
 	show_units(10, y_pos[3], str);
 
-	/* Дробная часть */
+	/* Р”СЂРѕР±РЅР°СЏ С‡Р°СЃС‚СЊ */
 	show_fract(10, y_pos[4], StrDigits, chan_set[chan].num_digits);
     }
 
-    /* Меняем положение по X */
+    /* РњРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ РїРѕ X */
     if (TimeMenuData.x_index) {
 	int save = i;
 	i += TimeMenuData.x_index;
 
-	/* Вперед */
+	/* Р’РїРµСЂРµРґ */
 	if (i > save) {
 
-	    /* Следующая строка или превышение размера */
+	    /* РЎР»РµРґСѓСЋС‰Р°СЏ СЃС‚СЂРѕРєР° РёР»Рё РїСЂРµРІС‹С€РµРЅРёРµ СЂР°Р·РјРµСЂР° */
 	    if (i > 7 || x_pos[k][i] < 1) {
 		k++;
 		i = 0;
 	    }
-	    k %= 4;		/* Не более 3-х  */
+	    k %= 4;		/* РќРµ Р±РѕР»РµРµ 3-С…  */
 
-	    /* Назад */
+	    /* РќР°Р·Р°Рґ */
 	} else if (i < save) {
 	    if (i < 0 || x_pos[k][i] < 1) {
 		i = 0;
@@ -369,27 +369,27 @@ static void main_chan_set(void)
 		}
 	    }
 	}
-	TimeMenuData.x_index = 0;	/* Обязательно! */
+	TimeMenuData.x_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
     }
 
-    /* Перемещаемся для коррекции. если канал включен */
+    /* РџРµСЂРµРјРµС‰Р°РµРјСЃСЏ РґР»СЏ РєРѕСЂСЂРµРєС†РёРё. РµСЃР»Рё РєР°РЅР°Р» РІРєР»СЋС‡РµРЅ */
     if (chan_set[chan].sens_type == NO_SENSOR) {
 	k = 0;
     }
-    dog_XorBox(x_pos[k][i], y_pos[k + 1] - 2, x_pos[k][i] + cursor[k][i], y_pos[k + 1] + 14);	// Включен
+    dog_XorBox(x_pos[k][i], y_pos[k + 1] - 2, x_pos[k][i] + cursor[k][i], y_pos[k + 1] + 14);	// Р’РєР»СЋС‡РµРЅ
 
-    /* Нажимаем кнопку вверх/вниз - коррекция */
+    /* РќР°Р¶РёРјР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· - РєРѕСЂСЂРµРєС†РёСЏ */
     if (TimeMenuData.y_index) {
 	if (k == 0) {
 	    if (i == 0) {
-		chan += TimeMenuData.y_index;	/* меняем номер канала */
+		chan += TimeMenuData.y_index;	/* РјРµРЅСЏРµРј РЅРѕРјРµСЂ РєР°РЅР°Р»Р° */
 		if (chan > (NUM_ALL_CHAN - 1)) {
 		    chan = 0;
 		} else if (chan < 0) {
 		    chan = (NUM_ALL_CHAN - 1);
 		}
 	    } else if (i == 1) {
-		t = chan_set[chan].sens_type;	/* Ключен или выключен */
+		t = chan_set[chan].sens_type;	/* РљР»СЋС‡РµРЅ РёР»Рё РІС‹РєР»СЋС‡РµРЅ */
 		t += TimeMenuData.y_index;
 
 		if (t < 0) {
@@ -399,19 +399,19 @@ static void main_chan_set(void)
 		}
 		chan_set[chan].sens_type = (sensor_type_en) t;
 	    }
-	} else if (k == 1) {	/* Формула  - пока выбираем из 8-ми примеров */
-	    f += TimeMenuData.y_index;	/* Меняем индекс в формуле  */
-	    if (f > (int) (sizeof(StrSubst) / sizeof(StrSubst[0]) - 1)) {	/* Приведение типа обязательно! */
+	} else if (k == 1) {	/* Р¤РѕСЂРјСѓР»Р°  - РїРѕРєР° РІС‹Р±РёСЂР°РµРј РёР· 8-РјРё РїСЂРёРјРµСЂРѕРІ */
+	    f += TimeMenuData.y_index;	/* РњРµРЅСЏРµРј РёРЅРґРµРєСЃ РІ С„РѕСЂРјСѓР»Рµ  */
+	    if (f > (int) (sizeof(StrSubst) / sizeof(StrSubst[0]) - 1)) {	/* РџСЂРёРІРµРґРµРЅРёРµ С‚РёРїР° РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
 		f = 0;
 	    } else if (f < 0) {
 		f = sizeof(StrSubst) / sizeof(StrSubst[0]) - 1;
 	    }
 
-	    /* Номер вещества */
+	    /* РќРѕРјРµСЂ РІРµС‰РµСЃС‚РІР° */
 	    strcpy(chan_set[chan].formula, StrSubst[f]);
 	    chan_set[chan].num_of_gas = f;
 
-	} else if (k == 2) {	/* Единицы измерений */
+	} else if (k == 2) {	/* Р•РґРёРЅРёС†С‹ РёР·РјРµСЂРµРЅРёР№ */
 	    t = chan_set[chan].type_units;
 	    t += TimeMenuData.y_index;
 	    if (t > 3) {
@@ -421,7 +421,7 @@ static void main_chan_set(void)
 	    }
 
 	    chan_set[chan].type_units = (units_mode_en) t;
-	} else if (k == 3) {	/* Число цифр */
+	} else if (k == 3) {	/* Р§РёСЃР»Рѕ С†РёС„СЂ */
 	    t = chan_set[chan].num_digits;
 	    t += TimeMenuData.y_index;
 	    if (t > 2) {
@@ -431,10 +431,10 @@ static void main_chan_set(void)
 	    }
 	    chan_set[chan].num_digits = (digit_mode_en) t;
 	}
-	TimeMenuData.y_index = 0;	/* Обязательно! */
+	TimeMenuData.y_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
     }
 
-    /* Нажатие кнопки "Select" - сохраняем в EEPROM и будем возвращаться к последнему измененному каналу */
+    /* РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" - СЃРѕС…СЂР°РЅСЏРµРј РІ EEPROM Рё Р±СѓРґРµРј РІРѕР·РІСЂР°С‰Р°С‚СЊСЃСЏ Рє РїРѕСЃР»РµРґРЅРµРјСѓ РёР·РјРµРЅРµРЅРЅРѕРјСѓ РєР°РЅР°Р»Сѓ */
     if (leaveMenu()) {
 	/* sensor_write_test_data(); */
 
@@ -448,12 +448,12 @@ static void main_chan_set(void)
 }
 
 /** 
- * Установка дополнительных настроек 
- * Измемнение регистров, если датчик на lmp91k
+ * РЈСЃС‚Р°РЅРѕРІРєР° РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… РЅР°СЃС‚СЂРѕРµРє 
+ * РР·РјРµРјРЅРµРЅРёРµ СЂРµРіРёСЃС‚СЂРѕРІ, РµСЃР»Рё РґР°С‚С‡РёРє РЅР° lmp91k
  */
 static void addit_chan_set(void)
 {
-    /* 8 позиции в 4 строках */
+    /* 8 РїРѕР·РёС†РёРё РІ 4 СЃС‚СЂРѕРєР°С… */
     static const u8 x_pos[][4] = {
 	{58, 82},
 	{35, 120},
@@ -461,7 +461,7 @@ static void addit_chan_set(void)
 	{70},
     };
 
-    /* Размер (ширина) курсора (так как может менятся) */
+    /* Р Р°Р·РјРµСЂ (С€РёСЂРёРЅР°) РєСѓСЂСЃРѕСЂР° (С‚Р°Рє РєР°Рє РјРѕР¶РµС‚ РјРµРЅСЏС‚СЃСЏ) */
     static const u8 cursor[][4] = {
 	{10, 40},
 	{55, 40},
@@ -469,59 +469,59 @@ static void addit_chan_set(void)
 	{40}
     };
 
-    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* Позиция по Y */
+    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* РџРѕР·РёС†РёСЏ РїРѕ Y */
     //   char str[64];
     u8 reg;
-    static int i = 0;		/* Столбцы */
-    static int k = 0;		/* строки */
-    static int chan = 0;	/* Номер канала */
+    static int i = 0;		/* РЎС‚РѕР»Р±С†С‹ */
+    static int k = 0;		/* СЃС‚СЂРѕРєРё */
+    static int chan = 0;	/* РќРѕРјРµСЂ РєР°РЅР°Р»Р° */
     static volatile int f = 0;
     int t;
 
     enterMenu(ADDIT_SET_CHANNEL_STATE);
 
-    /* Заголовок "Доп. настройки" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "Р”РѕРї. РЅР°СЃС‚СЂРѕР№РєРё" */
     show_caption(10, 90, ChannelSettingsMenuItems[3].psTitle);
 
-    /* Номер канала и его тип если выбираем кнопку вверх/вниз */
+    /* РќРѕРјРµСЂ РєР°РЅР°Р»Р° Рё РµРіРѕ С‚РёРї РµСЃР»Рё РІС‹Р±РёСЂР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· */
     show_onoff_chan(10, y_pos[1], StrNumChan, chan, chan_set[chan].sens_type);
 
     if (chan_set[chan].sens_type == I2C_SENSOR) {
-	/* TIA gain и Rload */
+	/* TIA gain Рё Rload */
 	reg = chan_set[chan].reg_set[TIACN_REG];
 	show_tiacn_reg(10, y_pos[2], reg);
 
-	/* Смещение */
+	/* РЎРјРµС‰РµРЅРёРµ */
 	reg = chan_set[chan].reg_set[REFCN_REG];
 	show_bias(10, y_pos[3], reg);
 
-	/* Внутренний нуль от напряжения опоры */
+	/* Р’РЅСѓС‚СЂРµРЅРЅРёР№ РЅСѓР»СЊ РѕС‚ РЅР°РїСЂСЏР¶РµРЅРёСЏ РѕРїРѕСЂС‹ */
 	show_int_zero(10, y_pos[4], reg);
     }
 
-    /* Перемещаемся для коррекции. если канал включен */
+    /* РџРµСЂРµРјРµС‰Р°РµРјСЃСЏ РґР»СЏ РєРѕСЂСЂРµРєС†РёРё. РµСЃР»Рё РєР°РЅР°Р» РІРєР»СЋС‡РµРЅ */
     if (chan_set[chan].sens_type != I2C_SENSOR) {
 	k = 0;
     }
-    /* Выделяем */
+    /* Р’С‹РґРµР»СЏРµРј */
     dog_XorBox(x_pos[k][i], y_pos[k + 1] - 2, x_pos[k][i] + cursor[k][i], y_pos[k + 1] + 14);
 
-    /* Меняем положение по X */
+    /* РњРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ РїРѕ X */
     if (TimeMenuData.x_index) {
 	int save = i;
 	i += TimeMenuData.x_index;
 
-	/* Вперед */
+	/* Р’РїРµСЂРµРґ */
 	if (i > save) {
 
-	    /* Следующая строка или превышение размера */
+	    /* РЎР»РµРґСѓСЋС‰Р°СЏ СЃС‚СЂРѕРєР° РёР»Рё РїСЂРµРІС‹С€РµРЅРёРµ СЂР°Р·РјРµСЂР° */
 	    if (i > 1 || x_pos[k][i] < 1) {
 		k++;
 		i = 0;
 	    }
-	    k %= 4;		/* Не более 3-х  */
+	    k %= 4;		/* РќРµ Р±РѕР»РµРµ 3-С…  */
 
-	    /* Назад */
+	    /* РќР°Р·Р°Рґ */
 	} else if (i < save) {
 	    if (i < 0 || x_pos[k][i] < 1) {
 		i = 0;
@@ -531,21 +531,21 @@ static void addit_chan_set(void)
 		}
 	    }
 	}
-	TimeMenuData.x_index = 0;	/* Обязательно! */
+	TimeMenuData.x_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
     }
 
-    /* Нажимаем кнопку вверх/вниз - коррекция */
+    /* РќР°Р¶РёРјР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· - РєРѕСЂСЂРµРєС†РёСЏ */
     if (TimeMenuData.y_index) {
 	if (k == 0) {
 	    if (i == 0) {
-		chan += TimeMenuData.y_index;	/* меняем номер канала */
+		chan += TimeMenuData.y_index;	/* РјРµРЅСЏРµРј РЅРѕРјРµСЂ РєР°РЅР°Р»Р° */
 		if (chan > (NUM_ALL_CHAN - 1)) {
 		    chan = 0;
 		} else if (chan < 0) {
 		    chan = (NUM_ALL_CHAN - 1);
 		}
 	    } else if (i == 1) {
-		t = chan_set[chan].sens_type;	/* Ключен или выключен */
+		t = chan_set[chan].sens_type;	/* РљР»СЋС‡РµРЅ РёР»Рё РІС‹РєР»СЋС‡РµРЅ */
 		t += TimeMenuData.y_index;
 
 		if (t < 0) {
@@ -555,15 +555,15 @@ static void addit_chan_set(void)
 		}
 		chan_set[chan].sens_type = (sensor_type_en) t;
 	    }
-	} else if (k == 1) {	/* Gain или Load */
-	    if (i == 0) {	/* Gain от 0 до 7-ми */
+	} else if (k == 1) {	/* Gain РёР»Рё Load */
+	    if (i == 0) {	/* Gain РѕС‚ 0 РґРѕ 7-РјРё */
 		f += TimeMenuData.y_index;
 		if (f > 7) {
 		    f = 0;
 		} else if (f < 0) {
 		    f = 7;
 		}
-		/* Затрем нулями только 3 места */
+		/* Р—Р°С‚СЂРµРј РЅСѓР»СЏРјРё С‚РѕР»СЊРєРѕ 3 РјРµСЃС‚Р° */
 		chan_set[chan].reg_set[TIACN_REG] &= ~0x1C;
 		chan_set[chan].reg_set[TIACN_REG] |= (f << 2);
 	    } else if (i == 1) {
@@ -577,24 +577,24 @@ static void addit_chan_set(void)
 		chan_set[chan].reg_set[TIACN_REG] |= f;
 	    }
 	} else if (k == 2) {
-	    if (i == 0) {	/* Знак смещения */
+	    if (i == 0) {	/* Р—РЅР°Рє СЃРјРµС‰РµРЅРёСЏ */
 		f += TimeMenuData.y_index;
 		if (f > 1) {
 		    f = 0;
 		} else if (f < 0) {
 		    f = 1;
 		}
-		/* Освобождаем одно место  */
+		/* РћСЃРІРѕР±РѕР¶РґР°РµРј РѕРґРЅРѕ РјРµСЃС‚Рѕ  */
 		chan_set[chan].reg_set[REFCN_REG] &= ~0x10;
 		chan_set[chan].reg_set[REFCN_REG] |= (f << 4);
-	    } else if (i == 1) {	/* Смещение в процентах */
+	    } else if (i == 1) {	/* РЎРјРµС‰РµРЅРёРµ РІ РїСЂРѕС†РµРЅС‚Р°С… */
 		f += TimeMenuData.y_index;
 		if (f > 13) {
 		    f = 0;
 		} else if (f < 0) {
 		    f = 13;
 		}
-		/* Освобождаем 4 места  */
+		/* РћСЃРІРѕР±РѕР¶РґР°РµРј 4 РјРµСЃС‚Р°  */
 		chan_set[chan].reg_set[REFCN_REG] &= ~0x0F;
 		chan_set[chan].reg_set[REFCN_REG] |= f;
 	    }
@@ -605,21 +605,21 @@ static void addit_chan_set(void)
 	    } else if (f < 0) {
 		f = 3;
 	    }
-	    /* Освобождаем 2 места  */
+	    /* РћСЃРІРѕР±РѕР¶РґР°РµРј 2 РјРµСЃС‚Р°  */
 	    chan_set[chan].reg_set[REFCN_REG] &= ~(3 << 5);
 	    chan_set[chan].reg_set[REFCN_REG] |= (f << 5);
 	}
 	TimeMenuData.y_index = 0;
     }
 
-    /*  Нажатие кнопки "Select" - записываем те каналы, которые поменяли */
+    /*  РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" - Р·Р°РїРёСЃС‹РІР°РµРј С‚Рµ РєР°РЅР°Р»С‹, РєРѕС‚РѕСЂС‹Рµ РїРѕРјРµРЅСЏР»Рё */
     if (leaveMenu()) {
 	int f;
 
 	for (int t = 0; t < NUM_ALL_CHAN; t++) {
 
 	    /*
-	       Для кислорода в ppm
+	       Р”Р»СЏ РєРёСЃР»РѕСЂРѕРґР° РІ ppm
 	       if (chan_set[t].num_of_gas == O2) {
 	       chan_set[t].gain = -281.671;
 	       chan_set[t].shift = 602776.28;
@@ -635,63 +635,63 @@ static void addit_chan_set(void)
 }
 
 /**
- * Установка коеффициентов каналов 
+ * РЈСЃС‚Р°РЅРѕРІРєР° РєРѕРµС„С„РёС†РёРµРЅС‚РѕРІ РєР°РЅР°Р»РѕРІ 
  */
 static void chan_coef_set(void)
 {
-    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* Позиция по Y */
+    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* РџРѕР·РёС†РёСЏ РїРѕ Y */
 
-    /* 8 позиции в 4 строках */
+    /* 8 РїРѕР·РёС†РёРё РІ 4 СЃС‚СЂРѕРєР°С… */
     static const u8 x_pos[][8] = {
 	{58},
 	{105, 140},
 	{105, 140},
     };
-    /* Размер (ширина) курсора (так как может менятся) */
+    /* Р Р°Р·РјРµСЂ (С€РёСЂРёРЅР°) РєСѓСЂСЃРѕСЂР° (С‚Р°Рє РєР°Рє РјРѕР¶РµС‚ РјРµРЅСЏС‚СЃСЏ) */
     static const u8 cursor[][8] = {
 	{10},
 	{30, 20},
 	{30, 20},
     };
 
-    static int i = 0;		/* Столбцы */
-    static int k = 0;		/* строки */
-    static int chan = 0;	/* Номер канала */
+    static int i = 0;		/* РЎС‚РѕР»Р±С†С‹ */
+    static int k = 0;		/* СЃС‚СЂРѕРєРё */
+    static int chan = 0;	/* РќРѕРјРµСЂ РєР°РЅР°Р»Р° */
 
     enterMenu(MENU_CHAN_COEF_STATE);
 
-    /* Заголовок "Коэфициенты" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "РљРѕСЌС„РёС†РёРµРЅС‚С‹" */
     show_caption(10, y_pos[0], ChannelSettingsMenuItems[1].psTitle);
 
-    /* Номер канала если выбираем кнопку вверх/вниз */
+    /* РќРѕРјРµСЂ РєР°РЅР°Р»Р° РµСЃР»Рё РІС‹Р±РёСЂР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· */
     show_num_chan(10, y_pos[1], StrNumChan, chan);
 
-    /* Коэф. умножения  */
+    /* РљРѕСЌС„. СѓРјРЅРѕР¶РµРЅРёСЏ  */
     show_mult_coef(10, y_pos[2], StrMultCoef, chan_set[chan].mult_coef);
 
-    /* Смещение нуля  */
+    /* РЎРјРµС‰РµРЅРёРµ РЅСѓР»СЏ  */
     show_mult_coef(10, y_pos[3], StrZeroShift, chan_set[chan].zero_shift);
 
 
-    dog_XorBox(x_pos[k][i], y_pos[k + 1] - 2, x_pos[k][i] + cursor[k][i], y_pos[k + 1] + 14);	// Включен
+    dog_XorBox(x_pos[k][i], y_pos[k + 1] - 2, x_pos[k][i] + cursor[k][i], y_pos[k + 1] + 14);	// Р’РєР»СЋС‡РµРЅ
 
 
-    /* Меняем положение по X */
+    /* РњРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ РїРѕ X */
     if (TimeMenuData.x_index) {
 	int save = i;
 	i += TimeMenuData.x_index;
 
-	/* Вперед */
+	/* Р’РїРµСЂРµРґ */
 	if (i > save) {
 
-	    /* Следующая строка или превышение размера */
+	    /* РЎР»РµРґСѓСЋС‰Р°СЏ СЃС‚СЂРѕРєР° РёР»Рё РїСЂРµРІС‹С€РµРЅРёРµ СЂР°Р·РјРµСЂР° */
 	    if (i > 1 || x_pos[k][i] < 1) {
 		k++;
 		i = 0;
 	    }
-	    k %= 3;		/* Не более 3-х  */
+	    k %= 3;		/* РќРµ Р±РѕР»РµРµ 3-С…  */
 
-	    /* Назад */
+	    /* РќР°Р·Р°Рґ */
 	} else if (i < save) {
 	    if (i < 0 || x_pos[k][i] < 1) {
 		i = 1;
@@ -703,13 +703,13 @@ static void chan_coef_set(void)
 		}
 	    }
 	}
-	TimeMenuData.x_index = 0;	/* Обязательно! */
+	TimeMenuData.x_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
     }
 
-    /* Нажимаем кнопку вверх/вниз - коррекция chan */
+    /* РќР°Р¶РёРјР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· - РєРѕСЂСЂРµРєС†РёСЏ chan */
     if (TimeMenuData.y_index) {
 
-	/* Меняем номер канала */
+	/* РњРµРЅСЏРµРј РЅРѕРјРµСЂ РєР°РЅР°Р»Р° */
 	if (k == 0) {
 	    chan += TimeMenuData.y_index;
 
@@ -720,9 +720,9 @@ static void chan_coef_set(void)
 	    }
 	} else if (k == 1) {
 
-	    if (i == 0) {	/* Целые  */
-		chan_set[chan].mult_coef += TimeMenuData.y_index;	/* Меняем число "усиление канала"  */
-	    } else if (i == 1) {	/* Дробные */
+	    if (i == 0) {	/* Р¦РµР»С‹Рµ  */
+		chan_set[chan].mult_coef += TimeMenuData.y_index;	/* РњРµРЅСЏРµРј С‡РёСЃР»Рѕ "СѓСЃРёР»РµРЅРёРµ РєР°РЅР°Р»Р°"  */
+	    } else if (i == 1) {	/* Р”СЂРѕР±РЅС‹Рµ */
 		chan_set[chan].mult_coef += TimeMenuData.y_index / 100.0;
 	    }
 
@@ -732,9 +732,9 @@ static void chan_coef_set(void)
 		chan_set[chan].mult_coef = 100.0;
 	    }
 	} else if (k == 2) {
-	    if (i == 0) {	/* Целые  */
-		chan_set[chan].zero_shift += TimeMenuData.y_index;	/* Меняем число "Смещение"  */
-	    } else if (i == 1) {	/* Дробные */
+	    if (i == 0) {	/* Р¦РµР»С‹Рµ  */
+		chan_set[chan].zero_shift += TimeMenuData.y_index;	/* РњРµРЅСЏРµРј С‡РёСЃР»Рѕ "РЎРјРµС‰РµРЅРёРµ"  */
+	    } else if (i == 1) {	/* Р”СЂРѕР±РЅС‹Рµ */
 		chan_set[chan].zero_shift += TimeMenuData.y_index / 100.0;
 	    }
 
@@ -744,12 +744,12 @@ static void chan_coef_set(void)
 		chan_set[chan].zero_shift = 100.0;
 	    }
 	}
-	/* Если отпускаем клавишу */
-	TimeMenuData.y_index = 0;	/* Обязательно! */
+	/* Р•СЃР»Рё РѕС‚РїСѓСЃРєР°РµРј РєР»Р°РІРёС€Сѓ */
+	TimeMenuData.y_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
     }
 
 
-    /* Нажатие кнопки "Select" */
+    /* РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" */
     if (leaveMenu()) {
 	int f;
 	for (int t = 0; t < NUM_ALL_CHAN; t++) {
@@ -761,7 +761,7 @@ static void chan_coef_set(void)
 
 /////>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 /**
- * Калибровка каналов, пока по двум точкам прямой
+ * РљР°Р»РёР±СЂРѕРІРєР° РєР°РЅР°Р»РѕРІ, РїРѕРєР° РїРѕ РґРІСѓРј С‚РѕС‡РєР°Рј РїСЂСЏРјРѕР№
  */
 static void calibr_menu_set(void)
 {
@@ -775,7 +775,7 @@ static void calibr_menu_set(void)
 	{67, 74, 81, 95, 102},
     };
 
-    /* Размер (ширина) курсора (так как может менятся) */
+    /* Р Р°Р·РјРµСЂ (С€РёСЂРёРЅР°) РєСѓСЂСЃРѕСЂР° (С‚Р°Рє РєР°Рє РјРѕР¶РµС‚ РјРµРЅСЏС‚СЃСЏ) */
     static const u8 cursor[][5] = {
 	{10},
 	{30},
@@ -783,43 +783,43 @@ static void calibr_menu_set(void)
 	{8, 8, 8, 8, 8},
     };
 
-    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* Позиция по Y */
-    static int i = 0;		/* Столбцы */
-    static int k = 0;		/* строки */
+    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* РџРѕР·РёС†РёСЏ РїРѕ Y */
+    static int i = 0;		/* РЎС‚РѕР»Р±С†С‹ */
+    static int k = 0;		/* СЃС‚СЂРѕРєРё */
 //    static int t = 0;
-    static int chan = 0;	/* Номер канала */
+    static int chan = 0;	/* РќРѕРјРµСЂ РєР°РЅР°Р»Р° */
     static int unit = 0;
-    static f32 fp0[NUM_ALL_CHAN], fp1[NUM_ALL_CHAN];                    /*vvv:  Точки калибровки для 8-ми каналов - расчитать их из gain и shift !!!!! */
-    static bool bok0[NUM_ALL_CHAN] = {false}, bok1[NUM_ALL_CHAN] = {false};     /* Откалибровано/ если меняем числа - убираем */
-    static f32 mv0[NUM_ALL_CHAN], mv1[NUM_ALL_CHAN];                    /* Милливольты для расчета точек прямой */
+    static f32 fp0[NUM_ALL_CHAN], fp1[NUM_ALL_CHAN];                    /*vvv:  РўРѕС‡РєРё РєР°Р»РёР±СЂРѕРІРєРё РґР»СЏ 8-РјРё РєР°РЅР°Р»РѕРІ - СЂР°СЃС‡РёС‚Р°С‚СЊ РёС… РёР· gain Рё shift !!!!! */
+    static bool bok0[NUM_ALL_CHAN] = {false}, bok1[NUM_ALL_CHAN] = {false};     /* РћС‚РєР°Р»РёР±СЂРѕРІР°РЅРѕ/ РµСЃР»Рё РјРµРЅСЏРµРј С‡РёСЃР»Р° - СѓР±РёСЂР°РµРј */
+    static f32 mv0[NUM_ALL_CHAN], mv1[NUM_ALL_CHAN];                    /* РњРёР»Р»РёРІРѕР»СЊС‚С‹ РґР»СЏ СЂР°СЃС‡РµС‚Р° С‚РѕС‡РµРє РїСЂСЏРјРѕР№ */
     char str[32];
 
-    /* Запустим измерения */
+    /* Р—Р°РїСѓСЃС‚РёРј РёР·РјРµСЂРµРЅРёСЏ */
     if (enterMenu(MENU_CALIBR_STATE)) {
 	sensor_start_aqusition();
     }
 
-    /* Заголовок "Точки калибровки" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "РўРѕС‡РєРё РєР°Р»РёР±СЂРѕРІРєРё" */
     show_caption(20, y_pos[0], CalibrMenuItems[0].psTitle);
 
-    /* Номер канала и если он включен - выбираем кнопку вверх/вниз */
+    /* РќРѕРјРµСЂ РєР°РЅР°Р»Р° Рё РµСЃР»Рё РѕРЅ РІРєР»СЋС‡РµРЅ - РІС‹Р±РёСЂР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· */
     show_onoff_chan(5, y_pos[1], StrNumChan, chan, chan_set[chan].sens_type);
 
-    /* Меняем положение по X */
+    /* РњРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ РїРѕ X */
     if (TimeMenuData.x_index) {
 	int save = i;
 	i += TimeMenuData.x_index;
-	/* Вперед */
+	/* Р’РїРµСЂРµРґ */
 	if (i > save) {
 
-	    /* Следующая строка или превышение размера */
+	    /* РЎР»РµРґСѓСЋС‰Р°СЏ СЃС‚СЂРѕРєР° РёР»Рё РїСЂРµРІС‹С€РµРЅРёРµ СЂР°Р·РјРµСЂР° */
 	    if (i > 4 || x_pos[k][i] < 1) {
 		k++;
 		i = 0;
 	    }
-	    k %= 4;		/* Не более 3-х  */
+	    k %= 4;		/* РќРµ Р±РѕР»РµРµ 3-С…  */
 
-	    /* Назад */
+	    /* РќР°Р·Р°Рґ */
 	} else if (i < save) {
 	    if (i < 0 || x_pos[k][i] < 1) {
 		i = 0;
@@ -832,9 +832,9 @@ static void calibr_menu_set(void)
 	TimeMenuData.x_index = 0;
     }
 
-    /* Нажимаем кнопку вверх/вниз - коррекция chan */
+    /* РќР°Р¶РёРјР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· - РєРѕСЂСЂРµРєС†РёСЏ chan */
     if (TimeMenuData.y_index) {
-	/* Меняем номер канала в 1-ой строке */
+	/* РњРµРЅСЏРµРј РЅРѕРјРµСЂ РєР°РЅР°Р»Р° РІ 1-РѕР№ СЃС‚СЂРѕРєРµ */
 	if (k == 0) {
 	    chan += TimeMenuData.y_index;
 
@@ -843,7 +843,7 @@ static void calibr_menu_set(void)
 	    } else if (chan < 0) {
 		chan = (NUM_ALL_CHAN - 1);
 	    }
-	} else if (k == 1) {	// единицы измерений
+	} else if (k == 1) {	// РµРґРёРЅРёС†С‹ РёР·РјРµСЂРµРЅРёР№
 	    /*   
 	       unit += TimeMenuData.y_index;
 	       if(unit < PPM_MODE) {
@@ -853,10 +853,10 @@ static void calibr_menu_set(void)
 	       } 
 	     */
 	    unit = PERCENT_MODE;
-	} else if (k == 2) {	// точка 0
+	} else if (k == 2) {	// С‚РѕС‡РєР° 0
 	    f32 fidx = fp0[chan];
 
-	    // старшая цифра
+	    // СЃС‚Р°СЂС€Р°СЏ С†РёС„СЂР°
 	    if (i == 0) {
 		fidx += TimeMenuData.y_index * 100;
 	    } else if (i == 1) {
@@ -879,10 +879,10 @@ static void calibr_menu_set(void)
             bok1[chan] = false;            
 	    fp0[chan] = fidx;
 
-	} else if(k == 3) { // точка 1        
+	} else if(k == 3) { // С‚РѕС‡РєР° 1        
 	    f32 fidx = fp1[chan];
 
-	    // старшая цифра
+	    // СЃС‚Р°СЂС€Р°СЏ С†РёС„СЂР°
 	    if (i == 0) {
 		fidx += TimeMenuData.y_index * 100;
 	    } else if (i == 1) {
@@ -908,18 +908,18 @@ static void calibr_menu_set(void)
 	TimeMenuData.y_index = 0;
     }
 
-    /*  Нажали кнопку "SET" */ 
+    /*  РќР°Р¶Р°Р»Рё РєРЅРѕРїРєСѓ "SET" */ 
     if(TimeMenuData.sel_index) {
       if(k == 2) {
         bok0[chan] = true;
         mv0[chan] = chan_set[chan].data.f_val; 
-        k = 3; // следующая точка
+        k = 3; // СЃР»РµРґСѓСЋС‰Р°СЏ С‚РѕС‡РєР°
         i = 0;
       } else if(k == 3) {
          bok1[chan] = true;
          mv1[chan] = chan_set[chan].data.f_val; 
 
-         // другой канал
+         // РґСЂСѓРіРѕР№ РєР°РЅР°Р»
          if(bok0[chan] == true) {
            k = 0;
            i = 0;
@@ -927,7 +927,7 @@ static void calibr_menu_set(void)
            k = 2;
            i = 0;
          }
-      } else { // В любом другом положении выходим и записываем
+      } else { // Р’ Р»СЋР±РѕРј РґСЂСѓРіРѕРј РїРѕР»РѕР¶РµРЅРёРё РІС‹С…РѕРґРёРј Рё Р·Р°РїРёСЃС‹РІР°РµРј
             if (leaveMenu()) {        
                  bok0[chan] = bok1[chan] = false;
 		 get_line_params(mv0[chan], fp0[chan], mv1[chan], fp1[chan], &chan_set[chan].gain, &chan_set[chan].shift);
@@ -939,62 +939,62 @@ static void calibr_menu_set(void)
      }
     
     
-    /* Показываем только если канал I2C */
+    /* РџРѕРєР°Р·С‹РІР°РµРј С‚РѕР»СЊРєРѕ РµСЃР»Рё РєР°РЅР°Р» I2C */
     if (chan_set[chan].sens_type == I2C_SENSOR) {
 
-	/* Милливольты канала */
+	/* РњРёР»Р»РёРІРѕР»СЊС‚С‹ РєР°РЅР°Р»Р° */
 	show_one_chan_acquis(115, y_pos[1], chan, chan_set[chan].data.f_val);
 
-	/* Единицы измерений */
+	/* Р•РґРёРЅРёС†С‹ РёР·РјРµСЂРµРЅРёР№ */
 	if (unit == PPM_MODE) {
 	    sprintf(str, "%s%s", StrUnits, "ppm");
-	} else {		// проценты
+	} else {		// РїСЂРѕС†РµРЅС‚С‹
 	    sprintf(str, "%s%s", StrUnits, " % ");
 	}
 	show_units(5, y_pos[2], str);
 
-	set_calibr_point(5, y_pos[3], 0, StrCalibrPoint, unit, fp0[chan], bok0[chan]);	// Первая точка
-	set_calibr_point(5, y_pos[4], 1, StrCalibrPoint, unit, fp1[chan], bok1[chan]);	// Вторая точка
+	set_calibr_point(5, y_pos[3], 0, StrCalibrPoint, unit, fp0[chan], bok0[chan]);	// РџРµСЂРІР°СЏ С‚РѕС‡РєР°
+	set_calibr_point(5, y_pos[4], 1, StrCalibrPoint, unit, fp1[chan], bok1[chan]);	// Р’С‚РѕСЂР°СЏ С‚РѕС‡РєР°
     }
 
-    // Выделяем для изменений
+    // Р’С‹РґРµР»СЏРµРј РґР»СЏ РёР·РјРµРЅРµРЅРёР№
     dog_XorBox(x_pos[k][i], y_pos[k + 1] - 2, x_pos[k][i] + cursor[k][i], y_pos[k + 1] + 14);
 
-    /*  Нажимаем кнопку "Set" */
+    /*  РќР°Р¶РёРјР°РµРј РєРЅРѕРїРєСѓ "Set" */
 //    if (leaveMenu()) {
-//	log_printf("Запись калибровочных данных\r\n");
+//	log_printf("Р—Р°РїРёСЃСЊ РєР°Р»РёР±СЂРѕРІРѕС‡РЅС‹С… РґР°РЅРЅС‹С…\r\n");
 //    }
 }
 
 //////<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 /**
- * Дополнительные настройки каналов 
+ * Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РЅР°СЃС‚СЂРѕР№РєРё РєР°РЅР°Р»РѕРІ 
  */
 static void menu_ranges_set(void)
 {
-    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* Позиция по Y */
-    static const u8 x_pos[] = { 58, 100 };	/* Позиция по X */
+    static const u8 y_pos[] = { 90, 70, 55, 40, 25 };	/* РџРѕР·РёС†РёСЏ РїРѕ Y */
+    static const u8 x_pos[] = { 58, 100 };	/* РџРѕР·РёС†РёСЏ РїРѕ X */
     static int k = 0;
     static int chan = 0;
 
     enterMenu(RANGES_SET_STATE);
 
-    /* Заголовок "Доп. настройки" */
+    /* Р—Р°РіРѕР»РѕРІРѕРє "Р”РѕРї. РЅР°СЃС‚СЂРѕР№РєРё" */
     show_caption(20, 90, ChannelSettingsMenuItems[2].psTitle);
 
-    /* Номер канала если выбираем кнопку вверх/вниз */
+    /* РќРѕРјРµСЂ РєР°РЅР°Р»Р° РµСЃР»Рё РІС‹Р±РёСЂР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· */
     show_num_chan(10, y_pos[1], StrNumChan, chan);
 
-    /* Порог минимум */
+    /* РџРѕСЂРѕРі РјРёРЅРёРјСѓРј */
     show_thresh_diapaz(10, y_pos[2], StrThreshMin, chan_set[chan].thresh_min);
 
-    /* Порог максимум */
+    /* РџРѕСЂРѕРі РјР°РєСЃРёРјСѓРј */
     show_thresh_diapaz(10, y_pos[3], StrThreshMax, chan_set[chan].thresh_max);
 
-    /* Диапазоны макс */
+    /* Р”РёР°РїР°Р·РѕРЅС‹ РјР°РєСЃ */
     show_thresh_diapaz(10, y_pos[4], StrDiapazMax, chan_set[chan].max_range);
 
-    /* Меняем положение */
+    /* РњРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ */
     if (TimeMenuData.x_index) {
 	k += TimeMenuData.x_index;
 
@@ -1003,19 +1003,19 @@ static void menu_ranges_set(void)
 	} else if (k < 0) {
 	    k = 3;
 	}
-	TimeMenuData.x_index = 0;	/* Обязательно! */
+	TimeMenuData.x_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
     }
 
     if (k == 0) {
-	dog_XorBox(x_pos[0], y_pos[k + 1], x_pos[0] + 10, y_pos[k + 1] + 14);	// Включен
+	dog_XorBox(x_pos[0], y_pos[k + 1], x_pos[0] + 10, y_pos[k + 1] + 14);	// Р’РєР»СЋС‡РµРЅ
     } else {
-	dog_XorBox(x_pos[1], y_pos[k + 1], x_pos[1] + 40, y_pos[k + 1] + 14);	// Включен
+	dog_XorBox(x_pos[1], y_pos[k + 1], x_pos[1] + 40, y_pos[k + 1] + 14);	// Р’РєР»СЋС‡РµРЅ
     }
 
-    /* Нажимаем кнопку вверх/вниз - коррекция chan */
+    /* РќР°Р¶РёРјР°РµРј РєРЅРѕРїРєСѓ РІРІРµСЂС…/РІРЅРёР· - РєРѕСЂСЂРµРєС†РёСЏ chan */
     if (TimeMenuData.y_index) {
 
-	/* Меняем номер канала */
+	/* РњРµРЅСЏРµРј РЅРѕРјРµСЂ РєР°РЅР°Р»Р° */
 	if (k == 0) {
 	    chan += TimeMenuData.y_index;
 
@@ -1024,21 +1024,21 @@ static void menu_ranges_set(void)
 	    } else if (chan < 0) {
 		chan = 7;
 	    }
-	} else if (k == 1) {	/* Чувствит. минимум */
+	} else if (k == 1) {	/* Р§СѓРІСЃС‚РІРёС‚. РјРёРЅРёРјСѓРј */
 	    chan_set[chan].thresh_min += (TimeMenuData.y_index) / 10.0;
 	    if (chan_set[chan].thresh_min > 10.0) {
 		chan_set[chan].thresh_min = 0;
 	    } else if (chan_set[chan].thresh_min < 0) {
 		chan_set[chan].thresh_min = 10.0;
 	    }
-	} else if (k == 2) {	/* Чувствит. максимум */
+	} else if (k == 2) {	/* Р§СѓРІСЃС‚РІРёС‚. РјР°РєСЃРёРјСѓРј */
 	    chan_set[chan].thresh_max += TimeMenuData.y_index * 10;
 	    if (chan_set[chan].thresh_max > 100.0) {
 		chan_set[chan].thresh_max = 0;
 	    } else if (chan_set[chan].thresh_max < 0) {
 		chan_set[chan].thresh_max = 100.0;
 	    }
-	} else if (k == 3) {	/* Максим диапазон измерений */
+	} else if (k == 3) {	/* РњР°РєСЃРёРј РґРёР°РїР°Р·РѕРЅ РёР·РјРµСЂРµРЅРёР№ */
 	    chan_set[chan].max_range += TimeMenuData.y_index * 10;
 	    if (chan_set[chan].max_range > 100.0) {
 		chan_set[chan].max_range = 0;
@@ -1047,10 +1047,10 @@ static void menu_ranges_set(void)
 	    }
 	}
 
-	TimeMenuData.y_index = 0;	/* Обязательно! */
+	TimeMenuData.y_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
     }
 
-    /* Нажатие кнопки "Select" */
+    /* РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" */
     if (leaveMenu()) {
 	int f;
 	for (int t = 0; t < NUM_ALL_CHAN; t++) {
@@ -1062,26 +1062,26 @@ static void menu_ranges_set(void)
 
 
 /**
- * Отображение меню настройки времени и даты
- * шрифт:  9x18b-позиции расчитаны из него
+ * РћС‚РѕР±СЂР°Р¶РµРЅРёРµ РјРµРЅСЋ РЅР°СЃС‚СЂРѕР№РєРё РІСЂРµРјРµРЅРё Рё РґР°С‚С‹
+ * С€СЂРёС„С‚:  9x18b-РїРѕР·РёС†РёРё СЂР°СЃС‡РёС‚Р°РЅС‹ РёР· РЅРµРіРѕ
  */
 static void menu_rtc_set(void)
 {
     static const u8 x_pos[] = { 66, 9 * 3 + 66 - 1, 9 * 6 + 66 };
     static const u8 y_pos[] = { 90, 60, 40 };
-    static int i = 0;		/* Столбцы */
-    static int k = 0;		/* строки */
+    static int i = 0;		/* РЎС‚РѕР»Р±С†С‹ */
+    static int k = 0;		/* СЃС‚СЂРѕРєРё */
 
-    /* Поменяли состояние */
+    /* РџРѕРјРµРЅСЏР»Рё СЃРѕСЃС‚РѕСЏРЅРёРµ */
     if (enterMenu(RTC_SET_STATE)) {
 	TimeMenuData.rtc_time = get_sec_ticks();
 
-	/* Выводим время */
+	/* Р’С‹РІРѕРґРёРј РІСЂРµРјСЏ */
 	sec_to_tm(TimeMenuData.rtc_time, &TimeMenuData.t0);
 	sec_to_str(TimeMenuData.rtc_time, TimeMenuData.str0);
     }
 
-    show_caption(30, y_pos[0], CommonSettingsMenuItems[0].psTitle);	/* Заголовок */
+    show_caption(30, y_pos[0], CommonSettingsMenuItems[0].psTitle);	/* Р—Р°РіРѕР»РѕРІРѕРє */
 
     dog_DrawStrP(10, y_pos[1], TIME_FONT, DOG_PSTR(StrTime));
     dog_DrawStrP(x_pos[0], y_pos[1], TIME_FONT, DOG_PSTR(TimeMenuData.str0 + 9));
@@ -1090,9 +1090,9 @@ static void menu_rtc_set(void)
     dog_DrawStrP(10, y_pos[2], TIME_FONT, DOG_PSTR(StrDate));
     dog_DrawStrP(x_pos[0], y_pos[2], TIME_FONT, DOG_PSTR(TimeMenuData.str0));
 
-    /* Выделяем время или дату для коррекции */
+    /* Р’С‹РґРµР»СЏРµРј РІСЂРµРјСЏ РёР»Рё РґР°С‚Сѓ РґР»СЏ РєРѕСЂСЂРµРєС†РёРё */
     if (TimeMenuData.x_index) {
-	/* Меняем положение по X */
+	/* РњРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ РїРѕ X */
 	i += TimeMenuData.x_index;
 	if (i < 0) {
 	    i = 2;
@@ -1102,27 +1102,27 @@ static void menu_rtc_set(void)
 	    k++;
 	}
 
-	/*  Меняем положение по Y */
+	/*  РњРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ РїРѕ Y */
 	if (k < 0) {
 	    k = 1;
 	} else if (k > 1) {
 	    k = 0;
 	}
 
-	TimeMenuData.x_index = 0;	/* Обязательно! */
+	TimeMenuData.x_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
     }
 
-    /* Перемещаемся для коррекции */
+    /* РџРµСЂРµРјРµС‰Р°РµРјСЃСЏ РґР»СЏ РєРѕСЂСЂРµРєС†РёРё */
     if (k == 0) {
-	dog_XorBox(x_pos[i], y_pos[1] - 5, x_pos[i] + 18, y_pos[1] + 15);	// Время
+	dog_XorBox(x_pos[i], y_pos[1] - 5, x_pos[i] + 18, y_pos[1] + 15);	// Р’СЂРµРјСЏ
     } else {
-	dog_XorBox(x_pos[i], y_pos[2] - 5, x_pos[i] + 18, y_pos[2] + 15);	// Дата
+	dog_XorBox(x_pos[i], y_pos[2] - 5, x_pos[i] + 18, y_pos[2] + 15);	// Р”Р°С‚Р°
     }
 
-    /* Нажаты клавиши верх/вниз ? */
+    /* РќР°Р¶Р°С‚С‹ РєР»Р°РІРёС€Рё РІРµСЂС…/РІРЅРёР· ? */
     if (TimeMenuData.y_index) {
 	if (k == 0) {
-	    /* Меняем Часы */
+	    /* РњРµРЅСЏРµРј Р§Р°СЃС‹ */
 	    if (i == 0) {
 		TimeMenuData.t0.tm_hour += TimeMenuData.y_index;
 		if (TimeMenuData.t0.tm_hour > 23) {
@@ -1130,7 +1130,7 @@ static void menu_rtc_set(void)
 		} else if (TimeMenuData.t0.tm_hour < 0) {
 		    TimeMenuData.t0.tm_hour = 23;
 		}
-		/* Меняем минуты */
+		/* РњРµРЅСЏРµРј РјРёРЅСѓС‚С‹ */
 	    } else if (i == 1) {
 		TimeMenuData.t0.tm_min += TimeMenuData.y_index;
 		if (TimeMenuData.t0.tm_min > 59) {
@@ -1138,7 +1138,7 @@ static void menu_rtc_set(void)
 		} else if (TimeMenuData.t0.tm_min < 0) {
 		    TimeMenuData.t0.tm_min = 59;
 		}
-		/* Меняем секунды */
+		/* РњРµРЅСЏРµРј СЃРµРєСѓРЅРґС‹ */
 	    } else if (i == 2) {
 		TimeMenuData.t0.tm_sec += TimeMenuData.y_index;
 		if (TimeMenuData.t0.tm_sec > 59) {
@@ -1148,11 +1148,11 @@ static void menu_rtc_set(void)
 		}
 	    }
 	} else {
-	    /* здесь будет ошибка, если в месяцах с 30 или меньше днями будет 31
-	     * чтобы этого избежать нужна проверка
+	    /* Р·РґРµСЃСЊ Р±СѓРґРµС‚ РѕС€РёР±РєР°, РµСЃР»Рё РІ РјРµСЃСЏС†Р°С… СЃ 30 РёР»Рё РјРµРЅСЊС€Рµ РґРЅСЏРјРё Р±СѓРґРµС‚ 31
+	     * С‡С‚РѕР±С‹ СЌС‚РѕРіРѕ РёР·Р±РµР¶Р°С‚СЊ РЅСѓР¶РЅР° РїСЂРѕРІРµСЂРєР°
 	     */
 
-	    /* Меняем День месяца */
+	    /* РњРµРЅСЏРµРј Р”РµРЅСЊ РјРµСЃСЏС†Р° */
 	    if (i == 0) {
 		TimeMenuData.t0.tm_mday += TimeMenuData.y_index;
 		if (TimeMenuData.t0.tm_mday > 31) {
@@ -1161,7 +1161,7 @@ static void menu_rtc_set(void)
 		    TimeMenuData.t0.tm_mday = 31;
 		}
 
-		/* Меняем месяц */
+		/* РњРµРЅСЏРµРј РјРµСЃСЏС† */
 	    } else if (i == 1) {
 		TimeMenuData.t0.tm_mon += TimeMenuData.y_index;
 		if (TimeMenuData.t0.tm_mon > 11) {
@@ -1169,7 +1169,7 @@ static void menu_rtc_set(void)
 		} else if (TimeMenuData.t0.tm_mon < 0) {
 		    TimeMenuData.t0.tm_mon = 11;
 		}
-		/* Меняем год 0 .. 99 */
+		/* РњРµРЅСЏРµРј РіРѕРґ 0 .. 99 */
 	    } else if (i == 2) {
 		int year = TimeMenuData.t0.tm_year - 100;
 		year += TimeMenuData.y_index;
@@ -1181,12 +1181,12 @@ static void menu_rtc_set(void)
 		TimeMenuData.t0.tm_year = year + 100;
 	    }
 	}
-	TimeMenuData.y_index = 0;	/* Обязательно! */
+	TimeMenuData.y_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
 	TimeMenuData.rtc_time = tm_to_sec(&TimeMenuData.t0);
-	sec_to_str(TimeMenuData.rtc_time, TimeMenuData.str0);	/* Выводим время */
+	sec_to_str(TimeMenuData.rtc_time, TimeMenuData.str0);	/* Р’С‹РІРѕРґРёРј РІСЂРµРјСЏ */
     }
 
-    /*  Нажатие кнопки "Select" */
+    /*  РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРєРё "Select" */
     if (leaveMenu()) {
 	set_time(TimeMenuData.rtc_time);
 	i = 0;
@@ -1195,8 +1195,8 @@ static void menu_rtc_set(void)
 
 
 /**
- * Отображение главного меню. Y позиция для основного меню 
- * нужно написать, так как у нас считается Y-0  внизу
+ * РћС‚РѕР±СЂР°Р¶РµРЅРёРµ РіР»Р°РІРЅРѕРіРѕ РјРµРЅСЋ. Y РїРѕР·РёС†РёСЏ РґР»СЏ РѕСЃРЅРѕРІРЅРѕРіРѕ РјРµРЅСЋ 
+ * РЅСѓР¶РЅРѕ РЅР°РїРёСЃР°С‚СЊ, С‚Р°Рє РєР°Рє Сѓ РЅР°СЃ СЃС‡РёС‚Р°РµС‚СЃСЏ Y-0  РІРЅРёР·Сѓ
  */
 static void main_menu_set(void)
 {
@@ -1204,66 +1204,66 @@ static void main_menu_set(void)
     static const u8 y_pos[] = { 90, 70, 55, 40, 25 };
     u8 i;
 
-    /* Выведем Заголовок */
+    /* Р’С‹РІРµРґРµРј Р—Р°РіРѕР»РѕРІРѕРє */
     show_caption(30, y_pos[0], MainMenuShifter.ptrCurrentMenu->psTitle);
 
-    /* Выведем пункты меню */
+    /* Р’С‹РІРµРґРµРј РїСѓРЅРєС‚С‹ РјРµРЅСЋ */
     for (u8 i = 0; i < MainMenuShifter.ptrCurrentMenu->nItems; i++) {
 	psMenuItem2 = &(MainMenuShifter.ptrCurrentMenu->psItems[i]);
 	dog_DrawStrP(15, y_pos[i + 1], MENU_FONT, DOG_PSTR(psMenuItem2->psTitle));
     }
 
-    /* Выбран пункт */
+    /* Р’С‹Р±СЂР°РЅ РїСѓРЅРєС‚ */
     MainMenuShifter.ptrMenuItem = &(MainMenuShifter.ptrCurrentMenu->psItems[MainMenuShifter.MenuItemIndex]);
 
-    /* Выделяем меню */
+    /* Р’С‹РґРµР»СЏРµРј РјРµРЅСЋ */
     i = y_pos[(MainMenuShifter.MenuItemIndex + 1) % 5];
     dog_XorBox(0, i - 2, 160, i + 12);
 }
 
 /**
- * Надпись - соединение по VCP - можно выйти только выдернув провод 
+ * РќР°РґРїРёСЃСЊ - СЃРѕРµРґРёРЅРµРЅРёРµ РїРѕ VCP - РјРѕР¶РЅРѕ РІС‹Р№С‚Рё С‚РѕР»СЊРєРѕ РІС‹РґРµСЂРЅСѓРІ РїСЂРѕРІРѕРґ 
  */
 static void menu_vcp_conn(void)
 {
     dog_DrawStrP(30, 60, CAPT_FONT, DOG_PSTR(StrVcpConn0));
     dog_DrawStrP(30, 40, CAPT_FONT, DOG_PSTR(StrVcpConn1));
 
-    /* Возврат в главное меню */
+    /* Р’РѕР·РІСЂР°С‚ РІ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ */
     if (!status_is_conn()) {
-	menu_state = MAIN_MENU_STATE;	/* vvvv: вернуть на место!!! */
-	TimeMenuData.sel_index = 0;	/* Обязательно! */
+	menu_state = MAIN_MENU_STATE;	/* vvvv: РІРµСЂРЅСѓС‚СЊ РЅР° РјРµСЃС‚Рѕ!!! */
+	TimeMenuData.sel_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
     }
 }
 
 
 /**
- * Перекодировать меню, так как нам нужен шрифт в формате koi8
+ * РџРµСЂРµРєРѕРґРёСЂРѕРІР°С‚СЊ РјРµРЅСЋ, С‚Р°Рє РєР°Рє РЅР°Рј РЅСѓР¶РµРЅ С€СЂРёС„С‚ РІ С„РѕСЂРјР°С‚Рµ koi8
  */
 static void make_rus_menu(void)
 {
 #if defined _WIN_STR_H
     int i, num;
 
-    /* Главное-Main menu */
+    /* Р“Р»Р°РІРЅРѕРµ-Main menu */
     for (i = 0; i < sizeof(MainMenuItems) / sizeof(MainMenuItems[0]); i++) {
 	win_to_koi8(MainMenuItems[i].psTitle);
     }
     win_to_koi8(MainMenu.psTitle);
 
-    /* Установки */
+    /* РЈСЃС‚Р°РЅРѕРІРєРё */
     for (i = 0; i < sizeof(SettingsMenuItems) / sizeof(SettingsMenuItems[0]); i++) {
 	win_to_koi8(SettingsMenuItems[i].psTitle);
     }
     win_to_koi8(SettingsMenu.psTitle);
 
-    /* Измерения */
+    /* РР·РјРµСЂРµРЅРёСЏ */
     for (i = 0; i < sizeof(MeasMenuItems) / sizeof(MeasMenuItems[0]); i++) {
 	win_to_koi8(MeasMenuItems[i].psTitle);
     }
     win_to_koi8(MeasMenu.psTitle);
 
-    /* Прочие */
+    /* РџСЂРѕС‡РёРµ */
     for (i = 0; i < sizeof(ZeroinMenuItems) / sizeof(ZeroinMenuItems[0]); i++) {
 	win_to_koi8(ZeroinMenuItems[i].psTitle);
     }
@@ -1287,17 +1287,17 @@ static void make_rus_menu(void)
     }
     win_to_koi8(CommonSettingsMenu.psTitle);
 
-    /* Время и дата */
+    /* Р’СЂРµРјСЏ Рё РґР°С‚Р° */
     win_to_koi8(StrTime);
     win_to_koi8(StrDate);
 
-    /* Вещества */
+    /* Р’РµС‰РµСЃС‚РІР° */
     num = sizeof(StrSubst) / sizeof(StrSubst[0]);
     for (i = 0; i < num; i++) {
 	win_to_koi8(StrSubst[i]);
     }
 
-    /* Основные настройки канала */
+    /* РћСЃРЅРѕРІРЅС‹Рµ РЅР°СЃС‚СЂРѕР№РєРё РєР°РЅР°Р»Р° */
     win_to_koi8(StrNumChan);
     win_to_koi8(StrOnOff);
     win_to_koi8(StrOff);
@@ -1367,7 +1367,7 @@ static void ReadKey(void)
 
 
 /**
- *  Ничего не делает
+ *  РќРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµС‚
  */
 void IdleFunc(void)
 {
@@ -1375,7 +1375,7 @@ void IdleFunc(void)
 
 
 /**
- * Первоначальная инициализация
+ * РџРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ
  */
 static void menu_init(void)
 {
@@ -1385,7 +1385,7 @@ static void menu_init(void)
 }
 
 /**
- *  Ходим по веткам ВВЕРХ только в состоянии MAIN
+ *  РҐРѕРґРёРј РїРѕ РІРµС‚РєР°Рј Р’Р’Р•Р РҐ С‚РѕР»СЊРєРѕ РІ СЃРѕСЃС‚РѕСЏРЅРёРё MAIN
  */
 static void UpFunc(void)
 {
@@ -1411,7 +1411,7 @@ static void UpFunc(void)
 
 
 /**
- *  Ходим по веткам Вниз только в состоянии MAIN
+ *  РҐРѕРґРёРј РїРѕ РІРµС‚РєР°Рј Р’РЅРёР· С‚РѕР»СЊРєРѕ РІ СЃРѕСЃС‚РѕСЏРЅРёРё MAIN
  */
 static void DownFunc(void)
 {
@@ -1432,7 +1432,7 @@ static void DownFunc(void)
 }
 
 /**
- * Кнопка "влево"
+ * РљРЅРѕРїРєР° "РІР»РµРІРѕ"
  */
 static void LeftFunc(void)
 {
@@ -1441,7 +1441,7 @@ static void LeftFunc(void)
 
 
 /**
- * Кнопка "вправо"
+ * РљРЅРѕРїРєР° "РІРїСЂР°РІРѕ"
  */
 static void RightFunc(void)
 {
@@ -1453,7 +1453,7 @@ static void RightFunc(void)
  */
 static void SelFunc(void)
 {
-    /*  Ходим по веткам только в состоянии MAIN */
+    /*  РҐРѕРґРёРј РїРѕ РІРµС‚РєР°Рј С‚РѕР»СЊРєРѕ РІ СЃРѕСЃС‚РѕСЏРЅРёРё MAIN */
     if (menu_state == MAIN_MENU_STATE) {
 
 	MainMenuShifter.ptrCurrentMenuItem = MainMenuShifter.ptrMenuItem;
@@ -1468,16 +1468,16 @@ static void SelFunc(void)
 	log_printf("Sel: MenuLevel %d, %s\r\n", MainMenuShifter.MenuLevel, koi8_to_win(MainMenuShifter.ptrMenuItem->psTitle));
     } else {
 	TimeMenuData.sel_index = 1;
-	///vvvvv:        menu_state = MAIN_MENU_STATE; //vvvv: вернуть на место!
+	///vvvvv:        menu_state = MAIN_MENU_STATE; //vvvv: РІРµСЂРЅСѓС‚СЊ РЅР° РјРµСЃС‚Рѕ!
     }
 }
 
 /**
- *  Возврат на предыдущее
+ *  Р’РѕР·РІСЂР°С‚ РЅР° РїСЂРµРґС‹РґСѓС‰РµРµ
  */
 static void ReturnFunc(void)
 {
-    /*  Ходим по веткам только в состоянии MAIN */
+    /*  РҐРѕРґРёРј РїРѕ РІРµС‚РєР°Рј С‚РѕР»СЊРєРѕ РІ СЃРѕСЃС‚РѕСЏРЅРёРё MAIN */
     if (menu_state == MAIN_MENU_STATE) {
 	if (MainMenuShifter.MenuLevel == 0) {
 	    MainMenuShifter.MenuLevel++;
@@ -1488,32 +1488,32 @@ static void ReturnFunc(void)
 	MainMenuShifter.MenuItemIndex = 0;
 	MainMenuShifter.MenuLevel--;
     }
-    /* Всегда - выход из режима ввода */
+    /* Р’СЃРµРіРґР° - РІС‹С…РѕРґ РёР· СЂРµР¶РёРјР° РІРІРѕРґР° */
     menu_state = MAIN_MENU_STATE;
     log_printf("Ret: MenuLevel %d, %s\r\n", MainMenuShifter.MenuLevel, koi8_to_win(MainMenuShifter.ptrMenuItem->psTitle));
 }
 
 /**
- * Задача разбора нажатия кнопки и выбора меню
+ * Р—Р°РґР°С‡Р° СЂР°Р·Р±РѕСЂР° РЅР°Р¶Р°С‚РёСЏ РєРЅРѕРїРєРё Рё РІС‹Р±РѕСЂР° РјРµРЅСЋ
  */
 void menu_create_task(void)
 {
     xTaskHandle task = NULL;
-    KeypadInit();		/* Клавиатура. Обрабтка нажатия происходит по таймеру SysTick */
-    menu_init();		/* Инициализация меню */
-    make_rus_menu();		/* Перекодировать меню */
+    KeypadInit();		/* РљР»Р°РІРёР°С‚СѓСЂР°. РћР±СЂР°Р±С‚РєР° РЅР°Р¶Р°С‚РёСЏ РїСЂРѕРёСЃС…РѕРґРёС‚ РїРѕ С‚Р°Р№РјРµСЂСѓ SysTick */
+    menu_init();		/* РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РјРµРЅСЋ */
+    make_rus_menu();		/* РџРµСЂРµРєРѕРґРёСЂРѕРІР°С‚СЊ РјРµРЅСЋ */
 
 #if 0
-    /* Предварительные настройки каналов */
+    /* РџСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ РЅР°СЃС‚СЂРѕР№РєРё РєР°РЅР°Р»РѕРІ */
     for (int i = 0; i < 8; i++) {
 	chan_set[i].sens_type = I2C_SENSOR;
 	chan_set[i].type_units = PPM_MODE;
 	chan_set[i].num_digits = INT_MODE;
-	strcpy(chan_set[i].formula, StrSubst[i]);	/* не более 31 */
+	strcpy(chan_set[i].formula, StrSubst[i]);	/* РЅРµ Р±РѕР»РµРµ 31 */
     }
 #endif
 
-    /* Создаем задачу хождения по меню */
+    /* РЎРѕР·РґР°РµРј Р·Р°РґР°С‡Сѓ С…РѕР¶РґРµРЅРёСЏ РїРѕ РјРµРЅСЋ */
     xTaskCreate(vMenuTask, (s8 *) "MenuTask", MENU_TASK_STACK_SIZE, NULL, MENU_TASK_PRIORITY, &task);
     if (task == NULL) {
 	log_printf("ERROR: Create MenuTask\r\n");
@@ -1523,7 +1523,7 @@ void menu_create_task(void)
 }
 
 /**
- * Задача обработки меню
+ * Р—Р°РґР°С‡Р° РѕР±СЂР°Р±РѕС‚РєРё РјРµРЅСЋ
  */
 static void vMenuTask(void *v)
 {
@@ -1532,7 +1532,7 @@ static void vMenuTask(void *v)
     for (;;) {
 	int t0 = get_sec_ticks();
 
-	/* Читаем кнопку если нет соединения (блокирование во время работы с VCP) */
+	/* Р§РёС‚Р°РµРј РєРЅРѕРїРєСѓ РµСЃР»Рё РЅРµС‚ СЃРѕРµРґРёРЅРµРЅРёСЏ (Р±Р»РѕРєРёСЂРѕРІР°РЅРёРµ РІРѕ РІСЂРµРјСЏ СЂР°Р±РѕС‚С‹ СЃ VCP) */
 	if (!status_is_conn()) {
 	    ReadKey();
 	}
@@ -1540,11 +1540,11 @@ static void vMenuTask(void *v)
 	dog_StartPage();
 	do {
 	    if (menu_state == MAIN_MENU_STATE) {
-		main_menu_set();	/* Меню и выборы подменю */
+		main_menu_set();	/* РњРµРЅСЋ Рё РІС‹Р±РѕСЂС‹ РїРѕРґРјРµРЅСЋ */
 	    } else if (menu_state == RTC_SET_STATE) {
-		menu_rtc_set();	/* Ввод данных */
+		menu_rtc_set();	/* Р’РІРѕРґ РґР°РЅРЅС‹С… */
 	    } else if (menu_state == MAIN_SET_CHANNEL_STATE) {
-		main_chan_set();	/* Главные установки каналов */
+		main_chan_set();	/* Р“Р»Р°РІРЅС‹Рµ СѓСЃС‚Р°РЅРѕРІРєРё РєР°РЅР°Р»РѕРІ */
 	    } else if (menu_state == ADDIT_SET_CHANNEL_STATE) {
 		addit_chan_set();
 	    } else if (menu_state == MENU_PUMP_SET_STATE) {
@@ -1567,7 +1567,7 @@ static void vMenuTask(void *v)
 		calibr_menu_set();
 	    }
 
-	    /* Внизу показываем время, номер прибора и еще какую нибудь инфу */
+	    /* Р’РЅРёР·Сѓ РїРѕРєР°Р·С‹РІР°РµРј РІСЂРµРјСЏ, РЅРѕРјРµСЂ РїСЂРёР±РѕСЂР° Рё РµС‰Рµ РєР°РєСѓСЋ РЅРёР±СѓРґСЊ РёРЅС„Сѓ */
 	    dog_DrawStrP(1, 10, MENU_FONT, DOG_PSTR("------------------------------------------------------------"));
 	    show_clock(t0);
 	    show_bat(5);
@@ -1578,8 +1578,8 @@ static void vMenuTask(void *v)
 }
 
 /** 
- * Для сокращения функций
- * Вход
+ * Р”Р»СЏ СЃРѕРєСЂР°С‰РµРЅРёСЏ С„СѓРЅРєС†РёР№
+ * Р’С…РѕРґ
  */
 static bool enterMenu(menu_state_en newState)
 {
@@ -1596,21 +1596,21 @@ static bool enterMenu(menu_state_en newState)
 
 
 /**
- *  Выход
+ *  Р’С‹С…РѕРґ
  */
 static bool leaveMenu(void)
 {
     bool res = false;
     if (TimeMenuData.sel_index) {
-	menu_state = MAIN_MENU_STATE;	/* vvvv: вернуть на место!!! */
-	TimeMenuData.sel_index = 0;	/* Обязательно! */
+	menu_state = MAIN_MENU_STATE;	/* vvvv: РІРµСЂРЅСѓС‚СЊ РЅР° РјРµСЃС‚Рѕ!!! */
+	TimeMenuData.sel_index = 0;	/* РћР±СЏР·Р°С‚РµР»СЊРЅРѕ! */
 	res = true;
     }
     return res;
 }
 
 /**
- * Переключить на работу с VCP
+ * РџРµСЂРµРєР»СЋС‡РёС‚СЊ РЅР° СЂР°Р±РѕС‚Сѓ СЃ VCP
  */
 void set_vcp_menu(void)
 {
